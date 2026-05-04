@@ -8,6 +8,8 @@ const usuarioRoutes = require('./routes/usuarioRoutes');
 const cuentaRoutes = require('./routes/cuentaRoutes');
 const transaccionRoutes = require('./routes/transaccionRoutes');
 const prestamoRoutes = require('./routes/prestamoRoutes');
+const authRoutes = require('./routes/authRoutes');
+const authMiddleware = require('./middlewares/auth');
 
 const app = express();
 
@@ -31,10 +33,11 @@ app.get('/', (req, res) => {
 });
 
 // Rutas de la API
-app.use('/api/usuarios', usuarioRoutes);
-app.use('/api/cuentas', cuentaRoutes);
-app.use('/api/transacciones', transaccionRoutes);
-app.use('/api/prestamos', prestamoRoutes);
+app.use('/api/auth', authRoutes);
+app.use('/api/usuarios', authMiddleware, usuarioRoutes);
+app.use('/api/cuentas', authMiddleware, cuentaRoutes);
+app.use('/api/transacciones', authMiddleware, transaccionRoutes);
+app.use('/api/prestamos', authMiddleware, prestamoRoutes);
 
 // Manejador global de errores
 app.use((err, req, res, next) => {

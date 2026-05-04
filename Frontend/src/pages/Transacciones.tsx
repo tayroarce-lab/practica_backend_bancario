@@ -105,57 +105,59 @@ const TransaccionesPage: React.FC = () => {
           </button>
         </div>
 
-        <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
-          <thead>
-            <tr style={{ backgroundColor: 'rgba(255,255,255,0.03)' }}>
-              <th style={{ padding: '1.25rem 1.5rem', color: 'var(--text-muted)', fontWeight: 600 }}>Fecha</th>
-              <th style={{ padding: '1.25rem 1.5rem', color: 'var(--text-muted)', fontWeight: 600 }}>Tipo</th>
-              <th style={{ padding: '1.25rem 1.5rem', color: 'var(--text-muted)', fontWeight: 600 }}>Monto</th>
-              <th style={{ padding: '1.25rem 1.5rem', color: 'var(--text-muted)', fontWeight: 600 }}>Cuenta</th>
-              <th style={{ padding: '1.25rem 1.5rem', color: 'var(--text-muted)', fontWeight: 600 }}>ID Transacción</th>
-            </tr>
-          </thead>
-          <tbody>
-            {loading ? (
-              <tr><td colSpan={5} style={{ textAlign: 'center', padding: '3rem' }}>Cargando transacciones...</td></tr>
-            ) : transacciones.length === 0 ? (
-              <tr><td colSpan={5} style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-muted)' }}>Sin movimientos.</td></tr>
-            ) : transacciones.map((tx) => (
-              <tr key={tx.id} style={{ borderBottom: '1px solid var(--border)' }}>
-                <td style={{ padding: '1.25rem 1.5rem', fontSize: '0.875rem' }}>
-                  {new Date(tx.createdAt).toLocaleString()}
-                </td>
-                <td style={{ padding: '1.25rem 1.5rem' }}>
-                  <div style={{ 
-                    display: 'inline-flex', 
-                    alignItems: 'center', 
-                    gap: '0.5rem', 
-                    color: getTipoColor(tx.tipo),
-                    backgroundColor: `${getTipoColor(tx.tipo)}15`,
-                    padding: '0.25rem 0.75rem',
-                    borderRadius: '20px',
-                    fontSize: '0.75rem',
-                    fontWeight: 700,
-                    textTransform: 'uppercase'
-                  }}>
-                    {getTipoIcon(tx.tipo)}
-                    {tx.tipo}
-                  </div>
-                </td>
-                <td style={{ padding: '1.25rem 1.5rem', fontWeight: 700, fontSize: '1.125rem' }}>
-                  {tx.tipo === 'retiro' || (tx.tipo === 'transferencia' && tx.cuentaDestinoId) ? '-' : '+'}${Number(tx.monto).toLocaleString()}
-                </td>
-                <td style={{ padding: '1.25rem 1.5rem', color: 'var(--text-muted)', fontSize: '0.875rem' }}>
-                  Cuenta ID: {tx.cuentaOrigenId || tx.cuentaDestinoId}
-                  {tx.cuentaDestinoId && tx.cuentaOrigenId && <span> → ID: {tx.cuentaDestinoId}</span>}
-                </td>
-                <td style={{ padding: '1.25rem 1.5rem', fontFamily: 'monospace', color: 'var(--text-muted)' }}>
-                  TXN-{tx.id.toString().padStart(6, '0')}
-                </td>
+        <div className="table-container">
+          <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+            <thead>
+              <tr style={{ backgroundColor: 'rgba(255,255,255,0.03)' }}>
+                <th style={{ padding: '1.25rem 1.5rem', color: 'var(--text-muted)', fontWeight: 600 }}>Fecha</th>
+                <th style={{ padding: '1.25rem 1.5rem', color: 'var(--text-muted)', fontWeight: 600 }}>Tipo</th>
+                <th style={{ padding: '1.25rem 1.5rem', color: 'var(--text-muted)', fontWeight: 600 }}>Monto</th>
+                <th style={{ padding: '1.25rem 1.5rem', color: 'var(--text-muted)', fontWeight: 600 }}>Cuenta</th>
+                <th style={{ padding: '1.25rem 1.5rem', color: 'var(--text-muted)', fontWeight: 600 }}>ID Transacción</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {loading ? (
+                <tr><td colSpan={5} style={{ textAlign: 'center', padding: '3rem' }}>Cargando transacciones...</td></tr>
+              ) : transacciones.length === 0 ? (
+                <tr><td colSpan={5} style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-muted)' }}>Sin movimientos.</td></tr>
+              ) : transacciones.map((tx) => (
+                <tr key={tx.id} style={{ borderBottom: '1px solid var(--border)' }}>
+                  <td style={{ padding: '1.25rem 1.5rem', fontSize: '0.875rem' }}>
+                    {new Date(tx.createdAt).toLocaleString()}
+                  </td>
+                  <td style={{ padding: '1.25rem 1.5rem' }}>
+                    <div style={{ 
+                      display: 'inline-flex', 
+                      alignItems: 'center', 
+                      gap: '0.5rem', 
+                      color: getTipoColor(tx.tipo),
+                      backgroundColor: `${getTipoColor(tx.tipo)}15`,
+                      padding: '0.25rem 0.75rem',
+                      borderRadius: '20px',
+                      fontSize: '0.75rem',
+                      fontWeight: 700,
+                      textTransform: 'uppercase'
+                    }}>
+                      {getTipoIcon(tx.tipo)}
+                      {tx.tipo}
+                    </div>
+                  </td>
+                  <td style={{ padding: '1.25rem 1.5rem', fontWeight: 700, fontSize: '1.125rem' }}>
+                    {tx.tipo === 'retiro' || (tx.tipo === 'transferencia' && tx.cuentaDestinoId) ? '-' : '+'}${Number(tx.monto).toLocaleString()}
+                  </td>
+                  <td style={{ padding: '1.25rem 1.5rem', color: 'var(--text-muted)', fontSize: '0.875rem' }}>
+                    Cuenta ID: {tx.cuentaOrigenId || tx.cuentaDestinoId}
+                    {tx.cuentaDestinoId && tx.cuentaOrigenId && <span> → ID: {tx.cuentaDestinoId}</span>}
+                  </td>
+                  <td style={{ padding: '1.25rem 1.5rem', fontFamily: 'monospace', color: 'var(--text-muted)' }}>
+                    TXN-{tx.id.toString().padStart(6, '0')}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       {showModal && (

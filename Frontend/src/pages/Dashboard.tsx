@@ -110,7 +110,11 @@ const Dashboard: React.FC = () => {
         ))}
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '1.5rem' }}>
+      <div style={{ 
+        display: 'grid', 
+        gridTemplateColumns: '1fr',
+        gap: '1.5rem' 
+      }} className="dashboard-grid">
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
           <section className="glass" style={{ padding: '1.5rem', borderRadius: 'var(--radius)' }}>
             <h2 style={{ marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '1.25rem' }}>

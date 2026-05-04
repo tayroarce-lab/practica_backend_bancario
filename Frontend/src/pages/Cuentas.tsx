@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { CreditCard, Plus, ArrowUpRight, ArrowDownLeft, Lock, Unlock } from 'lucide-react';
+import { toast } from 'sonner';
 import { cuentaService, usuarioService } from '../services/api';
 import type { Cuenta, Usuario } from '../types';
 
@@ -42,9 +43,10 @@ const CuentasPage: React.FC = () => {
         saldoInicial: Number(newCuenta.saldoInicial)
       });
       setShowModal(false);
+      toast.success('Cuenta creada exitosamente');
       fetchData();
     } catch (error: any) {
-      alert(error.message || 'Error al crear cuenta');
+      // toast error handled by api interceptor
     }
   };
 
@@ -59,9 +61,10 @@ const CuentasPage: React.FC = () => {
       }
       setShowActionModal(null);
       setMonto('');
+      toast.success('Operación realizada con éxito');
       fetchData();
     } catch (error) {
-      alert('Error al procesar la operación');
+      // toast error handled by api interceptor
     }
   };
 
@@ -69,9 +72,10 @@ const CuentasPage: React.FC = () => {
     try {
       const nuevoEstado = cuenta.estado === 'activa' ? 'bloqueada' : 'activa';
       await cuentaService.actualizarEstado(cuenta.id, nuevoEstado);
+      toast.info(`Cuenta ${nuevoEstado === 'activa' ? 'activada' : 'bloqueada'}`);
       fetchData();
     } catch (error) {
-      alert('Error al cambiar estado');
+      // toast error handled by api interceptor
     }
   };
 

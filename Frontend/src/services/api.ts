@@ -1,4 +1,5 @@
 import axios, { AxiosError } from 'axios';
+import { toast } from 'sonner';
 import type { 
   Usuario, 
   Cuenta, 
@@ -20,6 +21,15 @@ const api = axios.create({
     'Content-Type': 'application/json',
   },
   timeout: 10000, // Security: Prevent long-hanging requests
+});
+
+// Interceptor para añadir el token JWT
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem('token');
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
 });
 
 /**
@@ -46,14 +56,23 @@ const sanitize = <T>(data: T): T => {
 api.interceptors.response.use(
   (response) => response,
   (error: AxiosError) => {
-    const customError = {
-      message: (error.response?.data as any)?.error || 'Ocurrió un error inesperado en el servidor.',
-      status: error.response?.status,
-      originalError: import.meta.env.DEV ? error : null,
-    };
-    return Promise.reject(customError);
+    const message = (error.response?.data as any)?.error || 'Ocurrió un error inesperado en el servidor.';
+    toast.error(message);
+
+    if (error.response?.status === 401 && !window.location.pathname.includes('login')) {
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      window.location.href = '/login';
+    }
+
+    return Promise.reject(error);
   }
 );
+
+export const authService = {
+  login: (credentials: any) => api.post('/auth/login', credentials),
+  getMe: () => api.get('/auth/me')
+};
 
 export const usuarioService = {
   getUsuarios: () => api.get<Usuario[]>('/usuarios'),

@@ -83,47 +83,49 @@ const UsuariosPage: React.FC = () => {
           </div>
         </div>
 
-        <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
-          <thead>
-            <tr style={{ backgroundColor: 'rgba(255,255,255,0.03)' }}>
-              <th style={{ padding: '1.25rem 1.5rem', color: 'var(--text-muted)', fontWeight: 600 }}>Usuario</th>
-              <th style={{ padding: '1.25rem 1.5rem', color: 'var(--text-muted)', fontWeight: 600 }}>Email</th>
-              <th style={{ padding: '1.25rem 1.5rem', color: 'var(--text-muted)', fontWeight: 600 }}>Teléfono</th>
-              <th style={{ padding: '1.25rem 1.5rem', color: 'var(--text-muted)', fontWeight: 600, textAlign: 'right' }}>Acciones</th>
-            </tr>
-          </thead>
-          <tbody>
-            {loading ? (
-              <tr><td colSpan={4} style={{ textAlign: 'center', padding: '3rem' }}>Cargando usuarios...</td></tr>
-            ) : usuarios.map((user) => (
-              <tr key={user.id} style={{ borderBottom: '1px solid var(--border)', transition: 'var(--transition)' }}>
-                <td style={{ padding: '1.25rem 1.5rem' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                    <div style={{ width: '40px', height: '40px', borderRadius: '50%', backgroundColor: 'var(--primary-light)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--accent)' }}>
-                      <User size={20} />
-                    </div>
-                    <span style={{ fontWeight: 600 }}>{user.nombre}</span>
-                  </div>
-                </td>
-                <td style={{ padding: '1.25rem 1.5rem', color: 'var(--text-muted)' }}>{user.email}</td>
-                <td style={{ padding: '1.25rem 1.5rem', color: 'var(--text-muted)' }}>{user.telefono || 'N/A'}</td>
-                <td style={{ padding: '1.25rem 1.5rem', textAlign: 'right' }}>
-                  <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem' }}>
-                    <button style={{ padding: '0.5rem', backgroundColor: 'transparent', color: 'var(--text-muted)' }}>
-                      <Edit2 size={18} />
-                    </button>
-                    <button 
-                      onClick={() => handleDelete(user.id)}
-                      style={{ padding: '0.5rem', backgroundColor: 'transparent', color: 'var(--error)' }}
-                    >
-                      <Trash2 size={18} />
-                    </button>
-                  </div>
-                </td>
+        <div className="table-container">
+          <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+            <thead>
+              <tr style={{ backgroundColor: 'rgba(255,255,255,0.03)' }}>
+                <th style={{ padding: '1.25rem 1.5rem', color: 'var(--text-muted)', fontWeight: 600 }}>Usuario</th>
+                <th style={{ padding: '1.25rem 1.5rem', color: 'var(--text-muted)', fontWeight: 600 }}>Email</th>
+                <th style={{ padding: '1.25rem 1.5rem', color: 'var(--text-muted)', fontWeight: 600 }}>Teléfono</th>
+                <th style={{ padding: '1.25rem 1.5rem', color: 'var(--text-muted)', fontWeight: 600, textAlign: 'right' }}>Acciones</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {loading ? (
+                <tr><td colSpan={4} style={{ textAlign: 'center', padding: '3rem' }}>Cargando usuarios...</td></tr>
+              ) : usuarios.map((user) => (
+                <tr key={user.id} style={{ borderBottom: '1px solid var(--border)', transition: 'var(--transition)' }}>
+                  <td style={{ padding: '1.25rem 1.5rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                      <div style={{ width: '40px', height: '40px', borderRadius: '50%', backgroundColor: 'var(--primary-light)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--accent)' }}>
+                        <User size={20} />
+                      </div>
+                      <span style={{ fontWeight: 600 }}>{user.nombre}</span>
+                    </div>
+                  </td>
+                  <td style={{ padding: '1.25rem 1.5rem', color: 'var(--text-muted)' }}>{user.email}</td>
+                  <td style={{ padding: '1.25rem 1.5rem', color: 'var(--text-muted)' }}>{user.telefono || 'N/A'}</td>
+                  <td style={{ padding: '1.25rem 1.5rem', textAlign: 'right' }}>
+                    <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem' }}>
+                      <button style={{ padding: '0.5rem', backgroundColor: 'transparent', color: 'var(--text-muted)' }}>
+                        <Edit2 size={18} />
+                      </button>
+                      <button 
+                        onClick={() => handleDelete(user.id)}
+                        style={{ padding: '0.5rem', backgroundColor: 'transparent', color: 'var(--error)' }}
+                      >
+                        <Trash2 size={18} />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       {showModal && (

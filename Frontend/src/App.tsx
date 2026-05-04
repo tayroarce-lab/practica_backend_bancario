@@ -1,36 +1,56 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { Toaster } from 'sonner';
 import Navbar from './components/Navbar';
 import Dashboard from './pages/Dashboard';
-import UsuariosPage from './pages/Usuarios';
-import CuentasPage from './pages/Cuentas';
-import PrestamosPage from './pages/Prestamos';
-import TransaccionesPage from './pages/Transacciones';
+import Usuarios from './pages/Usuarios';
+import Cuentas from './pages/Cuentas';
+import Prestamos from './pages/Prestamos';
+import Transacciones from './pages/Transacciones';
+import LoginPage from './pages/LoginPage';
+import { AuthProvider, useAuth } from './context/AuthContext';
 
+const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { user, loading } = useAuth();
 
+  if (loading) return null; // O un spinner de carga
 
-const App: React.FC = () => {
+  if (!user) {
+    return <Navigate to="/login" replace />;
+  }
+
+  return <>{children}</>;
+};
+
+const AppContent: React.FC = () => {
+  const { user } = useAuth();
+
   return (
-    <Router>
-      <div style={{ display: 'flex', minHeight: '100vh' }}>
-        <Navbar />
-        <main style={{ 
-          flex: 1, 
-          marginLeft: '260px', 
-          padding: '2.5rem',
-          maxWidth: '1400px'
-        }}>
-          <Routes>
-            <Route path="/" element={<Dashboard />} />
-            <Route path="/usuarios" element={<UsuariosPage />} />
-            <Route path="/cuentas" element={<CuentasPage />} />
-            <Route path="/prestamos" element={<PrestamosPage />} />
-            <Route path="/transacciones" element={<TransaccionesPage />} />
-          </Routes>
-        </main>
-      </div>
-    </Router>
+    <div className="app-container">
+      {user && <Navbar />}
+      <main className="main-content">
+        <Routes>
+          <Route path="/login" element={!user ? <LoginPage /> : <Navigate to="/" />} />
+          <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+          <Route path="/usuarios" element={<ProtectedRoute><Usuarios /></ProtectedRoute>} />
+          <Route path="/cuentas" element={<ProtectedRoute><Cuentas /></ProtectedRoute>} />
+          <Route path="/prestamos" element={<ProtectedRoute><Prestamos /></ProtectedRoute>} />
+          <Route path="/transacciones" element={<ProtectedRoute><Transacciones /></ProtectedRoute>} />
+        </Routes>
+      </main>
+    </div>
   );
 };
+
+function App() {
+  return (
+    <AuthProvider>
+      <Router>
+        <Toaster position="top-right" richColors closeButton theme="dark" />
+        <AppContent />
+      </Router>
+    </AuthProvider>
+  );
+}
 
 export default App;

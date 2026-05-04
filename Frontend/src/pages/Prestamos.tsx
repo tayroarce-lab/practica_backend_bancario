@@ -132,71 +132,73 @@ const PrestamosPage: React.FC = () => {
       </header>
 
       <div className="glass" style={{ borderRadius: 'var(--radius)', overflow: 'hidden' }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
-          <thead>
-            <tr style={{ backgroundColor: 'rgba(255,255,255,0.03)' }}>
-              <th style={{ padding: '1.25rem 1.5rem', color: 'var(--text-muted)', fontWeight: 600 }}>Usuario</th>
-              <th style={{ padding: '1.25rem 1.5rem', color: 'var(--text-muted)', fontWeight: 600 }}>Monto</th>
-              <th style={{ padding: '1.25rem 1.5rem', color: 'var(--text-muted)', fontWeight: 600 }}>Términos</th>
-              <th style={{ padding: '1.25rem 1.5rem', color: 'var(--text-muted)', fontWeight: 600 }}>Estado</th>
-              <th style={{ padding: '1.25rem 1.5rem', color: 'var(--text-muted)', fontWeight: 600, textAlign: 'right' }}>Acciones</th>
-            </tr>
-          </thead>
-          <tbody>
-            {loading ? (
-              <tr><td colSpan={5} style={{ textAlign: 'center', padding: '3rem' }}>Cargando préstamos...</td></tr>
-            ) : prestamos.length === 0 ? (
-              <tr><td colSpan={5} style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-muted)' }}>No hay solicitudes registradas.</td></tr>
-            ) : prestamos.map((p) => (
-              <tr key={p.id} style={{ borderBottom: '1px solid var(--border)' }}>
-                <td style={{ padding: '1.25rem 1.5rem' }}>
-                  <div style={{ fontWeight: 600 }}>{p.usuario?.nombre || 'Cliente'}</div>
-                  <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>ID: {p.id}</div>
-                </td>
-                <td style={{ padding: '1.25rem 1.5rem', fontSize: '1.125rem', fontWeight: 700 }}>
-                  ${Number(p.monto).toLocaleString()}
-                </td>
-                <td style={{ padding: '1.25rem 1.5rem', color: 'var(--text-muted)', fontSize: '0.875rem' }}>
-                  <div>{p.plazoMeses} meses</div>
-                  <div>Tasa: {p.tasaInteres}%</div>
-                </td>
-                <td style={{ padding: '1.25rem 1.5rem' }}>
-                  <div style={{ 
-                    display: 'flex', 
-                    alignItems: 'center', 
-                    gap: '0.5rem', 
-                    color: getStatusColor(p.estado),
-                    textTransform: 'capitalize',
-                    fontWeight: 600
-                  }}>
-                    {getStatusIcon(p.estado)}
-                    {p.estado}
-                  </div>
-                </td>
-                <td style={{ padding: '1.25rem 1.5rem', textAlign: 'right' }}>
-                  {p.estado === 'pendiente' ? (
-                    <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem' }}>
-                      <button 
-                        onClick={() => openApproval(p)}
-                        style={{ padding: '0.5rem 1rem', backgroundColor: 'var(--success)20', color: 'var(--success)', border: '1px solid var(--success)40' }}
-                      >
-                        Aprobar
-                      </button>
-                      <button 
-                        onClick={() => handleStatus(p.id)}
-                        style={{ padding: '0.5rem 1rem', backgroundColor: 'var(--error)20', color: 'var(--error)', border: '1px solid var(--error)40' }}
-                      >
-                        Rechazar
-                      </button>
-                    </div>
-                  ) : (
-                    <span style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>Finalizado</span>
-                  )}
-                </td>
+        <div className="table-container">
+          <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+            <thead>
+              <tr style={{ backgroundColor: 'rgba(255,255,255,0.03)' }}>
+                <th style={{ padding: '1.25rem 1.5rem', color: 'var(--text-muted)', fontWeight: 600 }}>Usuario</th>
+                <th style={{ padding: '1.25rem 1.5rem', color: 'var(--text-muted)', fontWeight: 600 }}>Monto</th>
+                <th style={{ padding: '1.25rem 1.5rem', color: 'var(--text-muted)', fontWeight: 600 }}>Términos</th>
+                <th style={{ padding: '1.25rem 1.5rem', color: 'var(--text-muted)', fontWeight: 600 }}>Estado</th>
+                <th style={{ padding: '1.25rem 1.5rem', color: 'var(--text-muted)', fontWeight: 600, textAlign: 'right' }}>Acciones</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {loading ? (
+                <tr><td colSpan={5} style={{ textAlign: 'center', padding: '3rem' }}>Cargando préstamos...</td></tr>
+              ) : prestamos.length === 0 ? (
+                <tr><td colSpan={5} style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-muted)' }}>No hay solicitudes registradas.</td></tr>
+              ) : prestamos.map((p) => (
+                <tr key={p.id} style={{ borderBottom: '1px solid var(--border)' }}>
+                  <td style={{ padding: '1.25rem 1.5rem' }}>
+                    <div style={{ fontWeight: 600 }}>{p.usuario?.nombre || 'Cliente'}</div>
+                    <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>ID: {p.id}</div>
+                  </td>
+                  <td style={{ padding: '1.25rem 1.5rem', fontSize: '1.125rem', fontWeight: 700 }}>
+                    ${Number(p.monto).toLocaleString()}
+                  </td>
+                  <td style={{ padding: '1.25rem 1.5rem', color: 'var(--text-muted)', fontSize: '0.875rem' }}>
+                    <div>{p.plazoMeses} meses</div>
+                    <div>Tasa: {p.tasaInteres}%</div>
+                  </td>
+                  <td style={{ padding: '1.25rem 1.5rem' }}>
+                    <div style={{ 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      gap: '0.5rem', 
+                      color: getStatusColor(p.estado),
+                      textTransform: 'capitalize',
+                      fontWeight: 600
+                    }}>
+                      {getStatusIcon(p.estado)}
+                      {p.estado}
+                    </div>
+                  </td>
+                  <td style={{ padding: '1.25rem 1.5rem', textAlign: 'right' }}>
+                    {p.estado === 'pendiente' ? (
+                      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem' }}>
+                        <button 
+                          onClick={() => openApproval(p)}
+                          style={{ padding: '0.5rem 1rem', backgroundColor: 'var(--success)20', color: 'var(--success)', border: '1px solid var(--success)40' }}
+                        >
+                          Aprobar
+                        </button>
+                        <button 
+                          onClick={() => handleStatus(p.id)}
+                          style={{ padding: '0.5rem 1rem', backgroundColor: 'var(--error)20', color: 'var(--error)', border: '1px solid var(--error)40' }}
+                        >
+                          Rechazar
+                        </button>
+                      </div>
+                    ) : (
+                      <span style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>Finalizado</span>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       {showModal && (
