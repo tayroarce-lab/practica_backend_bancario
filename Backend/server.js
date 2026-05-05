@@ -1,16 +1,24 @@
 require('dotenv').config();
+const http = require('http');
 const app = require('./app');
 const { testConnection } = require('./database');
 const { RefreshToken } = require('./models');
 const { Op } = require('sequelize');
+const socketUtils = require('./utils/socket');
 
-// VALIDACIÓN AL ARRANCAR EL SERVIDOR
-if (!process.env.JWT_SECRET || !process.env.JWT_REFRESH_SECRET) {
-  console.error('FATAL ERROR: JWT_SECRET o JWT_REFRESH_SECRET no están definidos en las variables de entorno.');
+// VALIDACIÓN DE VARIABLES DE ENTORNO CRÍTICAS
+const requiredEnvVars = ['JWT_SECRET', 'DB_HOST', 'DB_USER', 'DB_PASS', 'DB_NAME'];
+const missing = requiredEnvVars.filter(v => !process.env[v]);
+if (missing.length > 0) {
+  console.error(`[FATAL] Variables de entorno faltantes: ${missing.join(', ')}`);
   process.exit(1);
 }
 
 const PORT = process.env.PORT || 3000;
+const server = http.createServer(app);
+
+// Inicializar Socket.io
+socketUtils.init(server);
 
 const startServer = async () => {
   try {
@@ -18,11 +26,10 @@ const startServer = async () => {
     await testConnection();
     
     // Iniciar el servidor
-    app.listen(PORT, () => {
-      console.log(`🚀 Servidor ejecutándose en el puerto ${PORT}`);
+    server.listen(PORT, () => {
+      console.log(`🚀 Servidor con Real-time ejecutándose en el puerto ${PORT}`);
       
       // TAREA DE LIMPIEZA AUTOMÁTICA
-      // Elimina tokens expirados o usados cada 1 hora
       setInterval(async () => {
         try {
           const deleted = await RefreshToken.destroy({

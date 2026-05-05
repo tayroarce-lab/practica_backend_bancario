@@ -8,6 +8,7 @@ export interface Usuario {
   fechaNacimiento?: string;
   password?: string;
   activo?: boolean;
+  rol?: 'admin' | 'empleado' | 'cliente';
   createdAt?: string;
 }
 
@@ -54,9 +55,12 @@ export interface Prestamo {
 // Request Types (DTOs)
 export interface CreateUsuarioDTO {
   nombre: string;
+  apellido: string;
   email: string;
   telefono?: string;
   password?: string;
+  dui?: string;
+  fechaNacimiento?: string;
 }
 
 export interface CreateCuentaDTO {

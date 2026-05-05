@@ -8,6 +8,7 @@ import Button from '../components/ui/Button';
 import Card from '../components/ui/Card';
 import Input from '../components/ui/Input';
 import Badge from '../components/ui/Badge';
+import Skeleton from '../components/ui/Skeleton';
 
 const CuentasPage: React.FC = () => {
   const [cuentas, setCuentas] = useState<Cuenta[]>([]);
@@ -97,7 +98,24 @@ const CuentasPage: React.FC = () => {
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: 'var(--space-6)' }}>
         {loading ? (
-          <p className="text-muted">Procesando información de cuentas...</p>
+          [1,2,3,4].map(i => (
+            <Card key={i}>
+              <div style={{ display: 'flex', gap: 'var(--space-4)', marginBottom: 'var(--space-6)' }}>
+                <Skeleton width="48px" height="48px" />
+                <div style={{ flex: 1 }}>
+                  <Skeleton width="60%" height="12px" style={{ marginBottom: '8px' }} />
+                  <Skeleton width="80%" height="16px" />
+                </div>
+              </div>
+              <Skeleton width="40%" height="12px" style={{ marginBottom: '8px' }} />
+              <Skeleton width="70%" height="32px" style={{ marginBottom: 'var(--space-8)' }} />
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <Skeleton width="33%" height="40px" />
+                <Skeleton width="33%" height="40px" />
+                <Skeleton width="33%" height="40px" />
+              </div>
+            </Card>
+          ))
         ) : cuentas.map((cuenta) => (
           <Card
             key={cuenta.id}

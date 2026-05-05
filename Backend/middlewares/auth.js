@@ -10,9 +10,8 @@ const authMiddleware = (req, res, next) => {
   const token = authHeader.split(' ')[1];
 
   try {
-    // Usar exclusivamente el secret de las variables de entorno
+    // El secret debe venir exclusivamente de process.env.JWT_SECRET
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    // req.usuario incluirá { id, email, rol } según lo definido en el controller
     req.usuario = decoded;
     next();
   } catch (error) {

@@ -1,10 +1,11 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import type { Usuario } from '../types';
+import { authService } from '../services/api';
 
 interface AuthContextType {
   user: Usuario | null;
   loading: boolean;
-  login: (token: string, user: Usuario) => void;
+  login: (accessToken: string, refreshToken: string, user: Usuario) => void;
   logout: () => void;
 }
 
@@ -16,25 +17,39 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   useEffect(() => {
     const initAuth = async () => {
-      const token = localStorage.getItem('token');
+      const accessToken = localStorage.getItem('accessToken');
+      const refreshToken = localStorage.getItem('refreshToken');
       const savedUser = localStorage.getItem('user');
       
-      if (token && savedUser) {
-        setUser(JSON.parse(savedUser));
+      if (accessToken && refreshToken && savedUser) {
+        try {
+          // Validar el token con el servidor al recargar
+          const res = await authService.getMe();
+          setUser(res.data);
+          localStorage.setItem('user', JSON.stringify(res.data));
+        } catch (error) {
+          console.error('Sesión inválida al recargar:', error);
+          localStorage.removeItem('accessToken');
+          localStorage.removeItem('refreshToken');
+          localStorage.removeItem('user');
+          setUser(null);
+        }
       }
       setLoading(false);
     };
     initAuth();
   }, []);
 
-  const login = (token: string, userData: Usuario) => {
-    localStorage.setItem('token', token);
+  const login = (accessToken: string, refreshToken: string, userData: Usuario) => {
+    localStorage.setItem('accessToken', accessToken);
+    localStorage.setItem('refreshToken', refreshToken);
     localStorage.setItem('user', JSON.stringify(userData));
     setUser(userData);
   };
 
   const logout = () => {
-    localStorage.removeItem('token');
+    localStorage.removeItem('accessToken');
+    localStorage.removeItem('refreshToken');
     localStorage.removeItem('user');
     setUser(null);
     window.location.href = '/login';

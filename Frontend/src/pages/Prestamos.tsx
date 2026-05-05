@@ -7,6 +7,8 @@ import Button from '../components/ui/Button';
 import Card from '../components/ui/Card';
 import Input from '../components/ui/Input';
 import Badge from '../components/ui/Badge';
+import Skeleton from '../components/ui/Skeleton';
+import { toast } from 'sonner';
 
 const PrestamosPage: React.FC = () => {
   const [prestamos, setPrestamos] = useState<Prestamo[]>([]);
@@ -53,9 +55,10 @@ const PrestamosPage: React.FC = () => {
         tasaInteres: Number(newPrestamo.tasaInteres)
       });
       setShowModal(false);
+      toast.success('Solicitud de préstamo emitida correctamente');
       fetchData();
     } catch (error: any) {
-      alert(error.message || 'Error al solicitar préstamo');
+      // handled by interceptor
     }
   };
 
@@ -64,7 +67,7 @@ const PrestamosPage: React.FC = () => {
       const res = await cuentaService.getCuentasPorUsuario(prestamo.usuarioId);
       const activeAccounts = res.data.filter(c => c.estado === 'activa');
       if (activeAccounts.length === 0) {
-        alert('El usuario no tiene cuentas activas para recibir el desembolso.');
+        toast.error('El usuario no tiene cuentas activas para recibir el desembolso.');
         return;
       }
       setUserAccounts(activeAccounts);
@@ -72,7 +75,7 @@ const PrestamosPage: React.FC = () => {
       setSelectedAccountId(activeAccounts[0].id.toString());
       setShowApprovalModal(true);
     } catch (error) {
-      alert('Error al cargar cuentas del usuario');
+      toast.error('Error al cargar cuentas del usuario');
     }
   };
 
@@ -81,9 +84,10 @@ const PrestamosPage: React.FC = () => {
     try {
       await prestamoService.aprobarPrestamo(selectedPrestamo.id, Number(selectedAccountId));
       setShowApprovalModal(false);
+      toast.success('Préstamo aprobado y fondos desembolsados');
       fetchData();
     } catch (error: any) {
-      alert(error.message || 'Error al aprobar préstamo');
+      // handled by interceptor
     }
   };
 
@@ -91,9 +95,10 @@ const PrestamosPage: React.FC = () => {
     if (!confirm('¿Desea denegar formalmente esta solicitud de crédito?')) return;
     try {
       await prestamoService.rechazarPrestamo(id);
+      toast.info('Solicitud de préstamo rechazada');
       fetchData();
     } catch (error) {
-      alert('Error al actualizar estado del préstamo');
+      // handled by interceptor
     }
   };
 
@@ -123,7 +128,11 @@ const PrestamosPage: React.FC = () => {
             </thead>
             <tbody>
               {loading ? (
-                <tr><td colSpan={5} style={{ textAlign: 'center', padding: 'var(--space-10)', color: 'var(--color-text-muted)' }}>Evaluando riesgos y solicitudes...</td></tr>
+                [1,2,3,4].map(i => (
+                  <tr key={i}>
+                    <td colSpan={5} style={{ padding: '8px' }}><Skeleton height="60px" /></td>
+                  </tr>
+                ))
               ) : prestamos.length === 0 ? (
                 <tr><td colSpan={5} style={{ textAlign: 'center', padding: 'var(--space-10)', color: 'var(--color-text-muted)' }}>No se han registrado solicitudes de crédito activas.</td></tr>
               ) : prestamos.map((p) => (

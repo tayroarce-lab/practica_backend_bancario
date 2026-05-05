@@ -2,17 +2,27 @@ import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { UserPlus, Trash2, Edit2, Search, Mail, Phone, User as UserIcon, Lock } from 'lucide-react';
 import { usuarioService } from '../services/api';
-import type { Usuario } from '../types';
+import type { Usuario, CreateUsuarioDTO } from '../types';
 import Button from '../components/ui/Button';
 import Card from '../components/ui/Card';
 import Input from '../components/ui/Input';
 import Badge from '../components/ui/Badge';
+import Skeleton from '../components/ui/Skeleton';
+import { toast } from 'sonner';
 
 const UsuariosPage: React.FC = () => {
   const [usuarios, setUsuarios] = useState<Usuario[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
-  const [newUser, setNewUser] = useState({ nombre: '', apellido: '', email: '', telefono: '', password: '', dui: '' });
+  const [editingUser, setEditingUser] = useState<Usuario | null>(null);
+  const [formData, setFormData] = useState<CreateUsuarioDTO>({ 
+    nombre: '', 
+    apellido: '', 
+    email: '', 
+    telefono: '', 
+    password: '', 
+    dui: '' 
+  });
 
   const fetchUsuarios = async () => {
     try {
@@ -29,15 +39,43 @@ const UsuariosPage: React.FC = () => {
     fetchUsuarios();
   }, []);
 
-  const handleCreate = async (e: React.FormEvent) => {
+  const handleOpenCreate = () => {
+    setEditingUser(null);
+    setFormData({ nombre: '', apellido: '', email: '', telefono: '', password: '', dui: '' });
+    setShowModal(true);
+  };
+
+  const handleOpenEdit = (user: Usuario) => {
+    setEditingUser(user);
+    setFormData({ 
+      nombre: user.nombre, 
+      apellido: user.apellido, 
+      email: user.email, 
+      telefono: user.telefono || '', 
+      dui: user.dui || '',
+      password: '' // No cargar password actual por seguridad
+    });
+    setShowModal(true);
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await usuarioService.crearUsuario(newUser);
+      if (editingUser) {
+        // En update, solo enviar password si se escribió algo
+        const updateData = { ...formData };
+        if (!updateData.password) delete updateData.password;
+        
+        await usuarioService.actualizarUsuario(editingUser.id, updateData);
+        toast.success('Perfil de cliente actualizado con éxito');
+      } else {
+        await usuarioService.crearUsuario(formData);
+        toast.success('Nuevo cliente registrado en el sistema');
+      }
       setShowModal(false);
-      setNewUser({ nombre: '', apellido: '', email: '', telefono: '', password: '', dui: '' });
       fetchUsuarios();
     } catch (error: any) {
-      alert(error.message || 'Error al crear usuario');
+      // handled by interceptor
     }
   };
 
@@ -45,9 +83,10 @@ const UsuariosPage: React.FC = () => {
     if (confirm('¿Estás seguro de eliminar este registro de cliente? Esta acción es irreversible.')) {
       try {
         await usuarioService.eliminarUsuario(id);
+        toast.info('Registro de cliente desactivado');
         fetchUsuarios();
       } catch (error) {
-        alert('Error al eliminar usuario');
+        // handled by interceptor
       }
     }
   };
@@ -59,7 +98,7 @@ const UsuariosPage: React.FC = () => {
           <h1 className="h1" style={{ marginBottom: 'var(--space-2)' }}>Directorio de Clientes</h1>
           <p className="text-secondary">Gestión de perfiles, credenciales y datos de contacto de alto patrimonio.</p>
         </div>
-        <Button onClick={() => setShowModal(true)}>
+        <Button onClick={handleOpenCreate}>
           <UserPlus size={18} style={{ marginRight: 'var(--space-2)' }} /> Registrar Cliente
         </Button>
       </header>
@@ -94,7 +133,11 @@ const UsuariosPage: React.FC = () => {
             </thead>
             <tbody>
               {loading ? (
-                <tr><td colSpan={4} style={{ textAlign: 'center', padding: 'var(--space-10)', color: 'var(--color-text-muted)' }}>Analizando base de datos...</td></tr>
+                [1,2,3,4].map(i => (
+                  <tr key={i}>
+                    <td colSpan={4} style={{ padding: '8px' }}><Skeleton height="60px" /></td>
+                  </tr>
+                ))
               ) : usuarios.map((user) => (
                 <tr key={user.id} style={{ backgroundColor: 'rgba(255,255,255,0.02)' }} className="row-hover">
                   <td style={{ padding: 'var(--space-4)', borderRadius: 'var(--radius-md) 0 0 var(--radius-md)' }}>
@@ -135,7 +178,7 @@ const UsuariosPage: React.FC = () => {
                   </td>
                   <td style={{ padding: 'var(--space-4)', borderRadius: '0 var(--radius-md) var(--radius-md) 0', textAlign: 'right' }}>
                     <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 'var(--space-2)' }}>
-                      <Button variant="ghost" size="sm" style={{ padding: 'var(--space-2)' }}>
+                      <Button variant="ghost" size="sm" onClick={() => handleOpenEdit(user)} style={{ padding: 'var(--space-2)' }}>
                         <Edit2 size={16} />
                       </Button>
                       <Button 
@@ -158,22 +201,25 @@ const UsuariosPage: React.FC = () => {
       {showModal && (
         <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.85)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, backdropFilter: 'blur(8px)' }}>
           <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} style={{ width: '100%', maxWidth: '520px' }}>
-            <Card title="Registro de Nuevo Cliente" subtitle="Ingrese los datos de identidad y contacto">
-              <form onSubmit={handleCreate} style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
+            <Card 
+              title={editingUser ? "Edición de Perfil" : "Registro de Nuevo Cliente"} 
+              subtitle={editingUser ? `Modificando registro de ${editingUser.nombre}` : "Ingrese los datos de identidad y contacto"}
+            >
+              <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-4)' }}>
                   <Input 
                     label="Nombre"
                     required
                     icon={<UserIcon size={16} />}
-                    value={newUser.nombre}
-                    onChange={(e) => setNewUser({...newUser, nombre: e.target.value})}
+                    value={formData.nombre}
+                    onChange={(e) => setFormData({...formData, nombre: e.target.value})}
                   />
                   <Input 
                     label="Apellido"
                     required
                     icon={<UserIcon size={16} />}
-                    value={newUser.apellido}
-                    onChange={(e) => setNewUser({...newUser, apellido: e.target.value})}
+                    value={formData.apellido}
+                    onChange={(e) => setFormData({...formData, apellido: e.target.value})}
                   />
                 </div>
                 
@@ -182,38 +228,38 @@ const UsuariosPage: React.FC = () => {
                   type="email"
                   required
                   icon={<Mail size={16} />}
-                  value={newUser.email}
-                  onChange={(e) => setNewUser({...newUser, email: e.target.value})}
+                  value={formData.email}
+                  onChange={(e) => setFormData({...formData, email: e.target.value})}
                 />
 
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-4)' }}>
                   <Input 
                     label="Teléfono"
                     icon={<Phone size={16} />}
-                    value={newUser.telefono}
-                    onChange={(e) => setNewUser({...newUser, telefono: e.target.value})}
+                    value={formData.telefono}
+                    onChange={(e) => setFormData({...formData, telefono: e.target.value})}
                   />
                   <Input 
                     label="Documento (DUI/ID)"
                     required
-                    value={newUser.dui}
-                    onChange={(e) => setNewUser({...newUser, dui: e.target.value})}
+                    value={formData.dui}
+                    onChange={(e) => setFormData({...formData, dui: e.target.value})}
                   />
                 </div>
 
                 <Input 
-                  label="Contraseña de Acceso"
+                  label={editingUser ? "Nueva Contraseña (dejar vacío para mantener)" : "Contraseña de Acceso"}
                   type="password"
-                  required
+                  required={!editingUser}
                   minLength={8}
                   icon={<Lock size={16} />}
-                  value={newUser.password}
-                  onChange={(e) => setNewUser({...newUser, password: e.target.value})}
+                  value={formData.password}
+                  onChange={(e) => setFormData({...formData, password: e.target.value})}
                 />
 
                 <div style={{ display: 'flex', gap: 'var(--space-4)', marginTop: 'var(--space-4)' }}>
                   <Button type="button" variant="ghost" fullWidth onClick={() => setShowModal(false)}>Cancelar</Button>
-                  <Button type="submit" fullWidth>Finalizar Registro</Button>
+                  <Button type="submit" fullWidth>{editingUser ? 'Guardar Cambios' : 'Finalizar Registro'}</Button>
                 </div>
               </form>
             </Card>

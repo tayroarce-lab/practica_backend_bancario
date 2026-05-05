@@ -13,19 +13,33 @@ import type {
 
 /**
  * SECURITY: Centralized API configuration.
- * In a real-world app, baseURL should come from an environment variable.
  */
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL || 'http://localhost:3000/api',
   headers: {
     'Content-Type': 'application/json',
   },
-  timeout: 10000, // Security: Prevent long-hanging requests
+  timeout: 10000,
 });
+
+// Flag to prevent multiple refresh calls
+let isRefreshing = false;
+let failedQueue: any[] = [];
+
+const processQueue = (error: any, token: string | null = null) => {
+  failedQueue.forEach(prom => {
+    if (error) {
+      prom.reject(error);
+    } else {
+      prom.resolve(token);
+    }
+  });
+  failedQueue = [];
+};
 
 // Interceptor para añadir el token JWT
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('token');
+  const token = localStorage.getItem('accessToken');
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
@@ -33,44 +47,84 @@ api.interceptors.request.use((config) => {
 });
 
 /**
- * SECURITY & CYBERSECURITY: Sanitize data before sending to server.
- * Basic protection against injection attempts and ensuring data integrity.
+ * SECURITY & CYBERSECURITY: Sanitize data
  */
 const sanitize = <T>(data: T): T => {
   if (typeof data !== 'object' || data === null) return data;
-  
   const sanitized = { ...data } as any;
   for (const key in sanitized) {
     if (typeof sanitized[key] === 'string') {
-      // Basic string trimming and HTML tag removal
       sanitized[key] = sanitized[key].trim().replace(/<[^>]*>?/gm, '');
     }
   }
   return sanitized;
 };
 
-/**
- * Error Handling Interceptor
- * Prevents leaking sensitive server information to the UI.
- */
+// Response Interceptor for Auto-Refresh
 api.interceptors.response.use(
   (response) => response,
-  (error: AxiosError) => {
-    const message = (error.response?.data as any)?.error || 'Ocurrió un error inesperado en el servidor.';
-    toast.error(message);
+  async (error: AxiosError) => {
+    const originalRequest = error.config as any;
+    
+    // Si es un 401 y no es la ruta de login ni ya se intentó refrescar
+    if (error.response?.status === 401 && !originalRequest._retry && !originalRequest.url?.includes('/auth/login')) {
+      
+      if (isRefreshing) {
+        return new Promise((resolve, reject) => {
+          failedQueue.push({ resolve, reject });
+        })
+        .then(token => {
+          originalRequest.headers.Authorization = `Bearer ${token}`;
+          return api(originalRequest);
+        })
+        .catch(err => Promise.reject(err));
+      }
 
-    if (error.response?.status === 401 && !window.location.pathname.includes('login')) {
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
-      window.location.href = '/login';
+      originalRequest._retry = true;
+      isRefreshing = true;
+
+      const refreshToken = localStorage.getItem('refreshToken');
+      if (!refreshToken) {
+        // No hay refresh token, forzar logout
+        localStorage.clear();
+        window.location.href = '/login';
+        return Promise.reject(error);
+      }
+
+      try {
+        const res = await axios.post(`${api.defaults.baseURL}/auth/refresh`, { refreshToken });
+        const { accessToken, refreshToken: newRefreshToken } = res.data;
+
+        localStorage.setItem('accessToken', accessToken);
+        localStorage.setItem('refreshToken', newRefreshToken);
+
+        api.defaults.headers.common['Authorization'] = `Bearer ${accessToken}`;
+        processQueue(null, accessToken);
+        
+        return api(originalRequest);
+      } catch (refreshError) {
+        processQueue(refreshError, null);
+        localStorage.clear();
+        window.location.href = '/login';
+        return Promise.reject(refreshError);
+      } finally {
+        isRefreshing = false;
+      }
     }
 
+    const message = (error.response?.data as any)?.error || 'Error en la comunicación con el servidor.';
+    if (!originalRequest.url?.includes('/auth/refresh')) {
+        toast.error(message);
+    }
+    
     return Promise.reject(error);
   }
 );
 
 export const authService = {
   login: (credentials: any) => api.post('/auth/login', credentials),
+  refresh: (refreshToken: string) => api.post('/auth/refresh', { refreshToken }),
+  logout: () => api.post('/auth/logout'),
   getMe: () => api.get('/auth/me')
 };
 

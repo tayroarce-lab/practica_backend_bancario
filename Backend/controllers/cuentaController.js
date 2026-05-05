@@ -1,4 +1,5 @@
 const { Cuenta, Usuario, TipoCuenta, Transaccion, sequelize } = require('../models');
+const socketUtils = require('../utils/socket');
 
 // Función auxiliar para generar un número de cuenta único
 const generarNumeroCuenta = () => {
@@ -182,6 +183,19 @@ const depositarFondos = async (req, res) => {
     }, { transaction: t });
 
     await t.commit();
+
+    // NOTIFICACIONES REAL-TIME
+    socketUtils.emitToUser(cuenta.usuarioId, 'balance_update', {
+      cuentaId: cuenta.id,
+      nuevoSaldo: saldoPosterior
+    });
+
+    socketUtils.emitToUser(cuenta.usuarioId, 'new_transaction', {
+      tipo: 'deposito',
+      monto: montoDecimal,
+      descripcion: descripcion || 'Depósito recibido'
+    });
+
     res.json({ message: 'Depósito realizado con éxito', transaccion, cuenta });
   } catch (error) {
     await t.rollback();
@@ -234,6 +248,19 @@ const retirarFondos = async (req, res) => {
     }, { transaction: t });
 
     await t.commit();
+
+    // NOTIFICACIONES REAL-TIME
+    socketUtils.emitToUser(cuenta.usuarioId, 'balance_update', {
+      cuentaId: cuenta.id,
+      nuevoSaldo: saldoPosterior
+    });
+
+    socketUtils.emitToUser(cuenta.usuarioId, 'new_transaction', {
+      tipo: 'retiro',
+      monto: montoDecimal,
+      descripcion: descripcion || 'Retiro realizado'
+    });
+
     res.json({ message: 'Retiro realizado con éxito', transaccion, cuenta });
   } catch (error) {
     await t.rollback();

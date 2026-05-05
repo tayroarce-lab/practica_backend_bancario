@@ -1,4 +1,5 @@
 const { Cuenta, Transaccion, sequelize } = require('../models');
+const socketUtils = require('../utils/socket');
 
 // Realizar transferencia entre cuentas (Con Transacción de base de datos)
 const realizarTransferencia = async (req, res) => {
@@ -72,6 +73,25 @@ const realizarTransferencia = async (req, res) => {
 
     // 7. Commit si todo salió bien
     await t.commit();
+
+    // NOTIFICACIONES REAL-TIME
+    // Notificar al emisor
+    socketUtils.emitToUser(cuentaOrigen.usuarioId, 'balance_update', {
+      cuentaId: cuentaOrigen.id,
+      nuevoSaldo: saldoPosteriorOrigen
+    });
+
+    // Notificar al receptor
+    socketUtils.emitToUser(cuentaDestino.usuarioId, 'balance_update', {
+      cuentaId: cuentaDestino.id,
+      nuevoSaldo: saldoPosteriorDestino
+    });
+    
+    socketUtils.emitToUser(cuentaDestino.usuarioId, 'new_transaction', {
+      tipo: 'transferencia',
+      monto: montoDecimal,
+      descripcion: descripcion || 'Transferencia recibida'
+    });
 
     res.json({ message: 'Transferencia realizada con éxito', transaccion });
   } catch (error) {

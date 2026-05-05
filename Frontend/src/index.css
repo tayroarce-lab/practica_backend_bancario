@@ -115,3 +115,11 @@ body {
   letter-spacing: -0.5px;
   color: var(--color-accent-500);
 }
+@keyframes skeletonPulse {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+.skeleton-pulse {
+  animation: skeletonPulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
