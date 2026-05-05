@@ -69,6 +69,11 @@ const obtenerCuentaPorId = async (req, res) => {
       return res.status(404).json({ error: 'Cuenta no encontrada' });
     }
 
+    // RESTRICCIÓN: Cliente solo puede ver sus propias cuentas
+    if (req.usuario.rol === 'cliente' && cuenta.usuarioId !== req.usuario.id) {
+      return res.status(403).json({ error: 'No tienes permisos para ver esta cuenta' });
+    }
+
     // Buscar las últimas 10 transacciones asociadas a la cuenta
     const transacciones = await Transaccion.findAll({
       where: {
@@ -95,6 +100,12 @@ const obtenerCuentaPorId = async (req, res) => {
 const obtenerCuentasPorUsuario = async (req, res) => {
   try {
     const { usuarioId } = req.params;
+
+    // RESTRICCIÓN: Cliente solo puede ver su propio usuarioId
+    if (req.usuario.rol === 'cliente' && parseInt(usuarioId) !== req.usuario.id) {
+      return res.status(403).json({ error: 'No tienes permisos para listar las cuentas de otro usuario' });
+    }
+
     const cuentas = await Cuenta.findAll({
       where: { usuarioId },
       include: [

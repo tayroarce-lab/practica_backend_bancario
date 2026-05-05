@@ -5,6 +5,11 @@ const solicitarPrestamo = async (req, res) => {
   try {
     const { monto, tasaInteres, plazoMeses, usuarioId } = req.body;
 
+    // RESTRICCIÓN: Cliente solo puede solicitar para sí mismo
+    if (req.usuario.rol === 'cliente' && parseInt(usuarioId) !== req.usuario.id) {
+      return res.status(403).json({ error: 'No tienes permisos para solicitar un préstamo para otro usuario' });
+    }
+
     // Validar usuario
     const usuario = await Usuario.findByPk(usuarioId);
     if (!usuario) {
@@ -149,6 +154,12 @@ const obtenerPrestamos = async (req, res) => {
 const obtenerPrestamosPorUsuario = async (req, res) => {
   try {
     const { usuarioId } = req.params;
+
+    // RESTRICCIÓN: Cliente solo puede ver sus propios préstamos
+    if (req.usuario.rol === 'cliente' && parseInt(usuarioId) !== req.usuario.id) {
+      return res.status(403).json({ error: 'No tienes permisos para ver los préstamos de otro usuario' });
+    }
+
     const prestamos = await Prestamo.findAll({
       where: { usuarioId },
       include: [

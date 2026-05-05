@@ -2,6 +2,13 @@ const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
+require('dotenv').config();
+
+// VALIDACIÓN CRÍTICA DE SEGURIDAD: Verificar secretos de JWT al arrancar
+if (!process.env.JWT_SECRET || !process.env.JWT_REFRESH_SECRET) {
+  console.error('FATAL ERROR: JWT_SECRET o JWT_REFRESH_SECRET no están definidos en las variables de entorno.');
+  process.exit(1);
+}
 
 // Importar Rutas
 const usuarioRoutes = require('./routes/usuarioRoutes');

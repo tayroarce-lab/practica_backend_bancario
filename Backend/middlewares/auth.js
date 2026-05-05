@@ -10,7 +10,9 @@ const authMiddleware = (req, res, next) => {
   const token = authHeader.split(' ')[1];
 
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secret_para_desarrollo_old_money');
+    // Usar exclusivamente el secret de las variables de entorno
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    // req.usuario incluirá { id, email, rol } según lo definido en el controller
     req.usuario = decoded;
     next();
   } catch (error) {

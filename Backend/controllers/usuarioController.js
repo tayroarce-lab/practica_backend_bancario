@@ -56,6 +56,12 @@ const obtenerUsuarios = async (req, res) => {
 const obtenerUsuarioPorId = async (req, res) => {
   try {
     const { id } = req.params;
+
+    // RESTRICCIÓN: Cliente solo puede ver su propio ID
+    if (req.usuario.rol === 'cliente' && req.usuario.id !== parseInt(id)) {
+      return res.status(403).json({ error: 'No tienes permisos para ver los datos de otro usuario' });
+    }
+
     const usuario = await Usuario.findByPk(id, {
       attributes: { exclude: ['password'] },
       include: [{
@@ -79,6 +85,12 @@ const obtenerUsuarioPorId = async (req, res) => {
 const actualizarUsuario = async (req, res) => {
   try {
     const { id } = req.params;
+
+    // RESTRICCIÓN: Cliente solo puede actualizar su propio perfil
+    if (req.usuario.rol === 'cliente' && req.usuario.id !== parseInt(id)) {
+      return res.status(403).json({ error: 'No tienes permisos para actualizar el perfil de otro usuario' });
+    }
+
     const { email, dui } = req.body;
 
     const usuario = await Usuario.findByPk(id);

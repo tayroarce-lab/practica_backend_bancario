@@ -25,6 +25,12 @@ const realizarTransferencia = async (req, res) => {
       return res.status(400).json({ error: 'La cuenta de origen no está activa' });
     }
 
+    // RESTRICCIÓN: Cliente solo puede transferir desde sus propias cuentas
+    if (req.usuario.rol === 'cliente' && cuentaOrigen.usuarioId !== req.usuario.id) {
+      await t.rollback();
+      return res.status(403).json({ error: 'No tienes permisos para transferir desde esta cuenta' });
+    }
+
     // 2. Validar cuenta destino
     const cuentaDestino = await Cuenta.findByPk(cuentaDestinoId, { transaction: t, lock: t.LOCK.UPDATE });
     if (!cuentaDestino) {
@@ -111,6 +117,15 @@ const obtenerTransacciones = async (req, res) => {
 const obtenerTransaccionesPorCuenta = async (req, res) => {
   try {
     const { cuentaId } = req.params;
+
+    // Verificar propiedad de la cuenta si es cliente
+    if (req.usuario.rol === 'cliente') {
+      const cuenta = await Cuenta.findByPk(cuentaId);
+      if (!cuenta || cuenta.usuarioId !== req.usuario.id) {
+        return res.status(403).json({ error: 'No tienes permisos para ver el historial de esta cuenta' });
+      }
+    }
+
     const transacciones = await Transaccion.findAll({
       where: {
         [require('sequelize').Op.or]: [

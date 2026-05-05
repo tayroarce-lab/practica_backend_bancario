@@ -41,6 +41,11 @@ const Usuario = sequelize.define('Usuario', {
   activo: {
     type: DataTypes.BOOLEAN,
     defaultValue: true
+  },
+  rol: {
+    type: DataTypes.ENUM('admin', 'empleado', 'cliente'),
+    allowNull: false,
+    defaultValue: 'cliente'
   }
 }, {
   tableName: 'Usuarios',

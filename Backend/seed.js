@@ -6,7 +6,7 @@ const seedData = async () => {
     await sequelize.authenticate();
     console.log('Conexión establecida. Iniciando inyección de datos...');
 
-    // 1. Crear Usuarios
+    // 1. Crear Usuarios con Roles
     const user1 = await Usuario.create({
       nombre: 'Juan',
       apellido: 'Perez',
@@ -15,7 +15,8 @@ const seedData = async () => {
       telefono: '555-1234',
       dui: '01234567-8',
       fechaNacimiento: '1990-05-15',
-      activo: true
+      activo: true,
+      rol: 'admin'
     });
 
     const user2 = await Usuario.create({
@@ -26,10 +27,23 @@ const seedData = async () => {
       telefono: '555-9876',
       dui: '09876543-2',
       fechaNacimiento: '1985-10-20',
-      activo: true
+      activo: true,
+      rol: 'cliente'
     });
 
-    console.log('Usuarios creados con éxito.');
+    const user3 = await Usuario.create({
+      nombre: 'Carlos',
+      apellido: 'Empleado',
+      email: 'carlos.empleado@email.com',
+      password: 'password123',
+      telefono: '555-4321',
+      dui: '05555555-5',
+      fechaNacimiento: '1992-03-10',
+      activo: true,
+      rol: 'empleado'
+    });
+
+    console.log('Usuarios creados con éxito (Admin, Cliente, Empleado).');
 
     // 2. Crear Cuentas
     // Recordatorio: tipoCuentaId 1 = Ahorro, 2 = Corriente (fueron creados en la migración 001)
