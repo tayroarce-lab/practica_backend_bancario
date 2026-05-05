@@ -1,9 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { CreditCard, Plus, ArrowUpRight, ArrowDownLeft, Lock, Unlock } from 'lucide-react';
+import { CreditCard, Plus, ArrowUpRight, ArrowDownLeft, Lock, Unlock, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { cuentaService, usuarioService } from '../services/api';
 import type { Cuenta, Usuario } from '../types';
+import Button from '../components/ui/Button';
+import Card from '../components/ui/Card';
+import Input from '../components/ui/Input';
+import Badge from '../components/ui/Badge';
 
 const CuentasPage: React.FC = () => {
   const [cuentas, setCuentas] = useState<Cuenta[]>([]);
@@ -46,7 +50,7 @@ const CuentasPage: React.FC = () => {
       toast.success('Cuenta creada exitosamente');
       fetchData();
     } catch (error: any) {
-      // toast error handled by api interceptor
+      // handled by interceptor
     }
   };
 
@@ -64,7 +68,7 @@ const CuentasPage: React.FC = () => {
       toast.success('Operación realizada con éxito');
       fetchData();
     } catch (error) {
-      // toast error handled by api interceptor
+      // handled by interceptor
     }
   };
 
@@ -75,216 +79,184 @@ const CuentasPage: React.FC = () => {
       toast.info(`Cuenta ${nuevoEstado === 'activa' ? 'activada' : 'bloqueada'}`);
       fetchData();
     } catch (error) {
-      // toast error handled by api interceptor
+      // handled by interceptor
     }
   };
 
   return (
     <div className="fade-in">
-      <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2.5rem' }}>
+      <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-10)' }}>
         <div>
-          <h1 style={{ fontSize: '2.25rem', marginBottom: '0.5rem' }}>Cuentas Bancarias</h1>
-          <p style={{ color: 'var(--text-muted)' }}>Gestión de saldos, estados y tipos de cuenta.</p>
+          <h1 className="h1" style={{ marginBottom: 'var(--space-2)' }}>Gestión de Cuentas</h1>
+          <p className="text-secondary">Control de saldos, estados y productos financieros.</p>
         </div>
-        <button 
-          onClick={() => setShowModal(true)}
-          style={{ 
-            backgroundColor: 'var(--accent)', 
-            color: 'white', 
-            padding: '0.75rem 1.5rem',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.5rem',
-            fontSize: '1rem'
-          }}
-        >
-          <Plus size={20} /> Nueva Cuenta
-        </button>
+        <Button onClick={() => setShowModal(true)}>
+          <Plus size={18} style={{ marginRight: 'var(--space-2)' }} /> Nueva Cuenta
+        </Button>
       </header>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: '1.5rem' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: 'var(--space-6)' }}>
         {loading ? (
-          <p>Cargando cuentas...</p>
+          <p className="text-muted">Procesando información de cuentas...</p>
         ) : cuentas.map((cuenta) => (
-          <motion.div
+          <Card
             key={cuenta.id}
-            whileHover={{ y: -5 }}
-            className="glass"
-            style={{ 
-              padding: '1.5rem', 
-              borderRadius: 'var(--radius)', 
-              position: 'relative',
-              overflow: 'hidden'
-            }}
+            action={<Badge status={cuenta.estado} />}
           >
-            <div style={{ 
-              position: 'absolute', 
-              top: 0, 
-              right: 0, 
-              padding: '0.5rem 1rem', 
-              backgroundColor: cuenta.estado === 'activa' ? 'var(--success)20' : 'var(--error)20',
-              color: cuenta.estado === 'activa' ? 'var(--success)' : 'var(--error)',
-              fontSize: '0.75rem',
-              fontWeight: 700,
-              textTransform: 'uppercase',
-              borderBottomLeftRadius: 'var(--radius)'
-            }}>
-              {cuenta.estado}
-            </div>
-
-            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.5rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-4)', marginBottom: 'var(--space-6)' }}>
               <div style={{ 
                 width: '48px', 
                 height: '48px', 
-                borderRadius: '12px', 
-                backgroundColor: 'var(--primary-light)', 
+                borderRadius: 'var(--radius-md)', 
+                backgroundColor: 'var(--color-bg-subtle)', 
                 display: 'flex', 
                 alignItems: 'center', 
                 justifyContent: 'center',
-                color: 'var(--accent)'
+                color: 'var(--color-accent-500)',
+                border: 'var(--border-subtle)'
               }}>
                 <CreditCard size={24} />
               </div>
               <div>
-                <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>{cuenta.tipoCuenta?.nombre || 'Cuenta Corriente'}</p>
-                <h3 style={{ fontSize: '1.125rem' }}>{cuenta.numeroCuenta}</h3>
+                <p className="text-muted" style={{ fontSize: 'var(--text-label)', fontWeight: 600, textTransform: 'uppercase' }}>{cuenta.tipoCuenta?.nombre || 'Cuenta Corriente'}</p>
+                <h3 className="font-mono" style={{ fontSize: '1rem', color: 'white', margin: 0 }}>{cuenta.numeroCuenta}</h3>
               </div>
             </div>
 
-            <div style={{ marginBottom: '2rem' }}>
-              <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>Saldo Disponible</p>
-              <h2 style={{ fontSize: '2rem', color: 'var(--success)' }}>${Number(cuenta.saldo).toLocaleString()}</h2>
-              <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem', marginTop: '0.5rem' }}>Titular: {cuenta.usuario?.nombre}</p>
+            <div style={{ marginBottom: 'var(--space-8)' }}>
+              <p className="text-muted" style={{ fontSize: 'var(--text-label)' }}>Saldo Disponible</p>
+              <h2 className="text-amount-lg amt-positive" style={{ margin: 'var(--space-1) 0' }}>
+                ${Number(cuenta.saldo).toLocaleString()}
+              </h2>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)', marginTop: 'var(--space-2)' }}>
+                <div style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: 'var(--color-accent-500)' }}></div>
+                <p className="text-secondary" style={{ fontSize: 'var(--text-body-sm)' }}>Titular: {cuenta.usuario?.nombre} {cuenta.usuario?.apellido}</p>
+              </div>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.5rem' }}>
-              <button 
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 'var(--space-2)' }}>
+              <Button 
+                variant="ghost"
+                size="sm"
                 disabled={cuenta.estado === 'bloqueada'}
                 onClick={() => { setSelectedCuenta(cuenta); setShowActionModal('deposito'); }}
-                style={{ 
-                  backgroundColor: 'var(--primary-light)', 
-                  padding: '0.625rem', 
-                  fontSize: '0.75rem',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  gap: '0.25rem',
-                  opacity: cuenta.estado === 'bloqueada' ? 0.5 : 1
-                }}
+                style={{ flexDirection: 'column', height: 'auto', padding: 'var(--space-3) 0' }}
               >
-                <ArrowDownLeft size={16} /> Depósito
-              </button>
-              <button 
+                <ArrowDownLeft size={16} /> <span style={{ marginTop: '4px' }}>Depósito</span>
+              </Button>
+              <Button 
+                variant="ghost"
+                size="sm"
                 disabled={cuenta.estado === 'bloqueada'}
                 onClick={() => { setSelectedCuenta(cuenta); setShowActionModal('retiro'); }}
-                style={{ 
-                  backgroundColor: 'var(--primary-light)', 
-                  padding: '0.625rem', 
-                  fontSize: '0.75rem',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  gap: '0.25rem',
-                  opacity: cuenta.estado === 'bloqueada' ? 0.5 : 1
-                }}
+                style={{ flexDirection: 'column', height: 'auto', padding: 'var(--space-3) 0' }}
               >
-                <ArrowUpRight size={16} /> Retiro
-              </button>
-              <button 
+                <ArrowUpRight size={16} /> <span style={{ marginTop: '4px' }}>Retiro</span>
+              </Button>
+              <Button 
+                variant="ghost"
+                size="sm"
                 onClick={() => toggleEstado(cuenta)}
-                style={{ 
-                  backgroundColor: 'var(--primary-light)', 
-                  padding: '0.625rem', 
-                  fontSize: '0.75rem',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  gap: '0.25rem'
-                }}
+                style={{ flexDirection: 'column', height: 'auto', padding: 'var(--space-3) 0' }}
               >
                 {cuenta.estado === 'activa' ? <Lock size={16} /> : <Unlock size={16} />} 
-                {cuenta.estado === 'activa' ? 'Bloquear' : 'Activar'}
-              </button>
+                <span style={{ marginTop: '4px' }}>{cuenta.estado === 'activa' ? 'Bloquear' : 'Activar'}</span>
+              </Button>
             </div>
-          </motion.div>
+          </Card>
         ))}
       </div>
 
       {/* Modal Crear Cuenta */}
       {showModal && (
-        <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.8)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, backdropFilter: 'blur(4px)' }}>
-          <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="glass" style={{ padding: '2.5rem', borderRadius: 'var(--radius)', width: '100%', maxWidth: '500px' }}>
-            <h2 style={{ marginBottom: '1.5rem' }}>Abrir Nueva Cuenta</h2>
-            <form onSubmit={handleCreate} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                <label style={{ fontSize: '0.875rem', fontWeight: 600 }}>Usuario / Titular</label>
-                <select 
-                  required
-                  style={{ width: '100%' }}
-                  value={newCuenta.usuarioId}
-                  onChange={(e) => setNewCuenta({...newCuenta, usuarioId: e.target.value})}
-                >
-                  <option value="">Seleccione un usuario</option>
-                  {usuarios.map(u => <option key={u.id} value={u.id}>{u.nombre}</option>)}
-                </select>
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                <label style={{ fontSize: '0.875rem', fontWeight: 600 }}>Tipo de Cuenta</label>
-                <select 
-                  style={{ width: '100%' }}
-                  value={newCuenta.tipoCuentaId}
-                  onChange={(e) => setNewCuenta({...newCuenta, tipoCuentaId: e.target.value})}
-                >
-                  <option value="1">Cuenta de Ahorros</option>
-                  <option value="2">Cuenta Corriente</option>
-                  <option value="3">Cuenta Nómina</option>
-                </select>
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                <label style={{ fontSize: '0.875rem', fontWeight: 600 }}>Saldo Inicial</label>
-                <input 
+        <div className="modal-overlay" style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.85)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, backdropFilter: 'blur(8px)' }}>
+          <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} style={{ width: '100%', maxWidth: '480px' }}>
+            <Card title="Apertura de Cuenta" subtitle="Complete los datos para el nuevo producto bancario">
+              <form onSubmit={handleCreate} style={{ display: 'flex', flexDirection: 'column' }}>
+                <div style={{ marginBottom: 'var(--space-5)' }}>
+                  <label style={{ display: 'block', marginBottom: 'var(--space-2)', fontSize: 'var(--text-label)', color: 'var(--color-text-secondary)', fontWeight: 600 }}>Seleccionar Cliente</label>
+                  <select 
+                    required
+                    style={{ 
+                      width: '100%', 
+                      backgroundColor: 'var(--color-primary-800)', 
+                      border: 'var(--border-subtle)', 
+                      borderRadius: 'var(--radius-md)', 
+                      padding: 'var(--space-3) var(--space-4)',
+                      color: 'white',
+                      outline: 'none'
+                    }}
+                    value={newCuenta.usuarioId}
+                    onChange={(e) => setNewCuenta({...newCuenta, usuarioId: e.target.value})}
+                  >
+                    <option value="">Buscar cliente...</option>
+                    {usuarios.map(u => <option key={u.id} value={u.id}>{u.nombre} {u.apellido}</option>)}
+                  </select>
+                </div>
+                
+                <div style={{ marginBottom: 'var(--space-5)' }}>
+                  <label style={{ display: 'block', marginBottom: 'var(--space-2)', fontSize: 'var(--text-label)', color: 'var(--color-text-secondary)', fontWeight: 600 }}>Tipo de Producto</label>
+                  <select 
+                    style={{ 
+                      width: '100%', 
+                      backgroundColor: 'var(--color-primary-800)', 
+                      border: 'var(--border-subtle)', 
+                      borderRadius: 'var(--radius-md)', 
+                      padding: 'var(--space-3) var(--space-4)',
+                      color: 'white',
+                      outline: 'none'
+                    }}
+                    value={newCuenta.tipoCuentaId}
+                    onChange={(e) => setNewCuenta({...newCuenta, tipoCuentaId: e.target.value})}
+                  >
+                    <option value="1">Cuenta de Ahorros Premium</option>
+                    <option value="2">Cuenta Corriente Business</option>
+                    <option value="3">Cuenta Nómina Gold</option>
+                  </select>
+                </div>
+
+                <Input 
+                  label="Capital Inicial"
                   type="number"
                   min="0"
-                  style={{ width: '100%' }}
                   value={newCuenta.saldoInicial}
                   onChange={(e) => setNewCuenta({...newCuenta, saldoInicial: e.target.value})}
                 />
-              </div>
-              <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem' }}>
-                <button type="button" onClick={() => setShowModal(false)} style={{ flex: 1, padding: '0.75rem', backgroundColor: 'var(--primary-light)', border: '1px solid var(--border)', color: 'var(--text)' }}>Cancelar</button>
-                <button type="submit" style={{ flex: 1, padding: '0.75rem', backgroundColor: 'var(--accent)', color: 'white' }}>Crear Cuenta</button>
-              </div>
-            </form>
+
+                <div style={{ display: 'flex', gap: 'var(--space-4)', marginTop: 'var(--space-4)' }}>
+                  <Button type="button" variant="ghost" fullWidth onClick={() => setShowModal(false)}>Cancelar</Button>
+                  <Button type="submit" fullWidth>Confirmar Apertura</Button>
+                </div>
+              </form>
+            </Card>
           </motion.div>
         </div>
       )}
 
-      {/* Modal Operaciones (Depósito/Retiro) */}
+      {/* Modal Operaciones */}
       {showActionModal && (
-        <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.8)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, backdropFilter: 'blur(4px)' }}>
-          <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="glass" style={{ padding: '2.5rem', borderRadius: 'var(--radius)', width: '100%', maxWidth: '400px' }}>
-            <h2 style={{ marginBottom: '0.5rem', textTransform: 'capitalize' }}>{showActionModal}</h2>
-            <p style={{ color: 'var(--text-muted)', marginBottom: '1.5rem' }}>Cuenta: {selectedCuenta?.numeroCuenta}</p>
-            <form onSubmit={handleAction} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                <label style={{ fontSize: '0.875rem', fontWeight: 600 }}>Monto a {showActionModal}</label>
-                <input 
+        <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.85)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, backdropFilter: 'blur(8px)' }}>
+          <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} style={{ width: '100%', maxWidth: '400px' }}>
+            <Card title={showActionModal === 'deposito' ? 'Ingreso de Capital' : 'Retiro de Fondos'} subtitle={`Cuenta No: ${selectedCuenta?.numeroCuenta}`}>
+              <form onSubmit={handleAction}>
+                <Input 
+                  label="Monto de Operación"
                   type="number"
                   required
                   min="1"
                   autoFocus
-                  style={{ width: '100%', fontSize: '1.5rem', textAlign: 'center' }}
+                  style={{ fontSize: '1.5rem', textAlign: 'center', fontFamily: 'var(--font-mono)' }}
                   value={monto}
                   onChange={(e) => setMonto(e.target.value)}
                 />
-              </div>
-              <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem' }}>
-                <button type="button" onClick={() => setShowActionModal(null)} style={{ flex: 1, padding: '0.75rem', backgroundColor: 'var(--primary-light)', border: '1px solid var(--border)', color: 'var(--text)' }}>Cancelar</button>
-                <button type="submit" style={{ flex: 1, padding: '0.75rem', backgroundColor: showActionModal === 'deposito' ? 'var(--success)' : 'var(--accent)', color: 'white' }}>
-                  Confirmar {showActionModal === 'deposito' ? 'Depósito' : 'Retiro'}
-                </button>
-              </div>
-            </form>
+                <div style={{ display: 'flex', gap: 'var(--space-4)', marginTop: 'var(--space-6)' }}>
+                  <Button type="button" variant="ghost" fullWidth onClick={() => setShowActionModal(null)}>Cerrar</Button>
+                  <Button type="submit" variant={showActionModal === 'deposito' ? 'primary' : 'danger'} fullWidth>
+                    {showActionModal === 'deposito' ? 'Ejecutar Depósito' : 'Confirmar Retiro'}
+                  </Button>
+                </div>
+              </form>
+            </Card>
           </motion.div>
         </div>
       )}

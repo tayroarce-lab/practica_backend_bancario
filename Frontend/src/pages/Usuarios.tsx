@@ -1,14 +1,18 @@
 import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { UserPlus, Trash2, Edit2, Search, Mail, Phone, User } from 'lucide-react';
+import { UserPlus, Trash2, Edit2, Search, Mail, Phone, User as UserIcon, Lock } from 'lucide-react';
 import { usuarioService } from '../services/api';
 import type { Usuario } from '../types';
+import Button from '../components/ui/Button';
+import Card from '../components/ui/Card';
+import Input from '../components/ui/Input';
+import Badge from '../components/ui/Badge';
 
 const UsuariosPage: React.FC = () => {
   const [usuarios, setUsuarios] = useState<Usuario[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
-  const [newUser, setNewUser] = useState({ nombre: '', email: '', telefono: '', password: '' });
+  const [newUser, setNewUser] = useState({ nombre: '', apellido: '', email: '', telefono: '', password: '', dui: '' });
 
   const fetchUsuarios = async () => {
     try {
@@ -30,7 +34,7 @@ const UsuariosPage: React.FC = () => {
     try {
       await usuarioService.crearUsuario(newUser);
       setShowModal(false);
-      setNewUser({ nombre: '', email: '', telefono: '', password: '' });
+      setNewUser({ nombre: '', apellido: '', email: '', telefono: '', password: '', dui: '' });
       fetchUsuarios();
     } catch (error: any) {
       alert(error.message || 'Error al crear usuario');
@@ -38,7 +42,7 @@ const UsuariosPage: React.FC = () => {
   };
 
   const handleDelete = async (id: number) => {
-    if (confirm('¿Estás seguro de eliminar este usuario?')) {
+    if (confirm('¿Estás seguro de eliminar este registro de cliente? Esta acción es irreversible.')) {
       try {
         await usuarioService.eliminarUsuario(id);
         fetchUsuarios();
@@ -50,75 +54,98 @@ const UsuariosPage: React.FC = () => {
 
   return (
     <div className="fade-in">
-      <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2.5rem' }}>
+      <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-10)' }}>
         <div>
-          <h1 style={{ fontSize: '2.25rem', marginBottom: '0.5rem' }}>Gestión de Usuarios</h1>
-          <p style={{ color: 'var(--text-muted)' }}>Administra los clientes y sus datos de contacto.</p>
+          <h1 className="h1" style={{ marginBottom: 'var(--space-2)' }}>Directorio de Clientes</h1>
+          <p className="text-secondary">Gestión de perfiles, credenciales y datos de contacto de alto patrimonio.</p>
         </div>
-        <button 
-          onClick={() => setShowModal(true)}
-          style={{ 
-            backgroundColor: 'var(--accent)', 
-            color: 'white', 
-            padding: '0.75rem 1.5rem',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.5rem',
-            fontSize: '1rem'
-          }}
-        >
-          <UserPlus size={20} /> Nuevo Usuario
-        </button>
+        <Button onClick={() => setShowModal(true)}>
+          <UserPlus size={18} style={{ marginRight: 'var(--space-2)' }} /> Registrar Cliente
+        </Button>
       </header>
 
-      <div className="glass" style={{ borderRadius: 'var(--radius)', overflow: 'hidden' }}>
-        <div style={{ padding: '1.5rem', borderBottom: '1px solid var(--border)', display: 'flex', gap: '1rem' }}>
-          <div style={{ position: 'relative', flex: 1 }}>
-            <Search size={18} style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
-            <input 
-              type="text" 
-              placeholder="Buscar usuarios..." 
-              style={{ width: '100%', paddingLeft: '3rem' }}
-            />
-          </div>
+      <Card title="Cartera de Clientes" subtitle="Listado centralizado de usuarios del sistema">
+        <div style={{ position: 'relative', marginBottom: 'var(--space-6)', maxWidth: '400px' }}>
+          <Search size={18} style={{ position: 'absolute', left: 'var(--space-4)', top: '50%', transform: 'translateY(-50%)', color: 'var(--color-text-muted)' }} />
+          <input 
+            type="text" 
+            placeholder="Buscar por nombre o email..." 
+            style={{ 
+              width: '100%', 
+              padding: 'var(--space-3) var(--space-4) var(--space-3) var(--space-10)',
+              backgroundColor: 'var(--color-primary-800)',
+              border: 'var(--border-subtle)',
+              borderRadius: 'var(--radius-md)',
+              color: 'white',
+              outline: 'none'
+            }} 
+          />
         </div>
 
         <div className="table-container">
-          <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+          <table style={{ width: '100%', borderCollapse: 'separate', borderSpacing: '0 8px' }}>
             <thead>
-              <tr style={{ backgroundColor: 'rgba(255,255,255,0.03)' }}>
-                <th style={{ padding: '1.25rem 1.5rem', color: 'var(--text-muted)', fontWeight: 600 }}>Usuario</th>
-                <th style={{ padding: '1.25rem 1.5rem', color: 'var(--text-muted)', fontWeight: 600 }}>Email</th>
-                <th style={{ padding: '1.25rem 1.5rem', color: 'var(--text-muted)', fontWeight: 600 }}>Teléfono</th>
-                <th style={{ padding: '1.25rem 1.5rem', color: 'var(--text-muted)', fontWeight: 600, textAlign: 'right' }}>Acciones</th>
+              <tr>
+                <th style={{ padding: 'var(--space-4)', color: 'var(--color-text-muted)', fontWeight: 600, fontSize: 'var(--text-label)', textTransform: 'uppercase', textAlign: 'left' }}>Titular</th>
+                <th style={{ padding: 'var(--space-4)', color: 'var(--color-text-muted)', fontWeight: 600, fontSize: 'var(--text-label)', textTransform: 'uppercase', textAlign: 'left' }}>Contacto</th>
+                <th style={{ padding: 'var(--space-4)', color: 'var(--color-text-muted)', fontWeight: 600, fontSize: 'var(--text-label)', textTransform: 'uppercase', textAlign: 'left' }}>Rol</th>
+                <th style={{ padding: 'var(--space-4)', color: 'var(--color-text-muted)', fontWeight: 600, fontSize: 'var(--text-label)', textTransform: 'uppercase', textAlign: 'right' }}>Acciones</th>
               </tr>
             </thead>
             <tbody>
               {loading ? (
-                <tr><td colSpan={4} style={{ textAlign: 'center', padding: '3rem' }}>Cargando usuarios...</td></tr>
+                <tr><td colSpan={4} style={{ textAlign: 'center', padding: 'var(--space-10)', color: 'var(--color-text-muted)' }}>Analizando base de datos...</td></tr>
               ) : usuarios.map((user) => (
-                <tr key={user.id} style={{ borderBottom: '1px solid var(--border)', transition: 'var(--transition)' }}>
-                  <td style={{ padding: '1.25rem 1.5rem' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                      <div style={{ width: '40px', height: '40px', borderRadius: '50%', backgroundColor: 'var(--primary-light)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--accent)' }}>
-                        <User size={20} />
+                <tr key={user.id} style={{ backgroundColor: 'rgba(255,255,255,0.02)' }} className="row-hover">
+                  <td style={{ padding: 'var(--space-4)', borderRadius: 'var(--radius-md) 0 0 var(--radius-md)' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-4)' }}>
+                      <div style={{ 
+                        width: '40px', 
+                        height: '40px', 
+                        borderRadius: '50%', 
+                        backgroundColor: 'var(--color-bg-subtle)', 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        justifyContent: 'center', 
+                        color: 'var(--color-accent-500)',
+                        border: 'var(--border-subtle)'
+                      }}>
+                        <UserIcon size={20} />
                       </div>
-                      <span style={{ fontWeight: 600 }}>{user.nombre}</span>
+                      <div>
+                        <p className="font-display" style={{ fontWeight: 600, color: 'white', margin: 0 }}>{user.nombre} {user.apellido}</p>
+                        <p style={{ fontSize: '10px', color: 'var(--color-text-muted)', textTransform: 'uppercase', letterSpacing: '1px' }}>ID: {user.id.toString().padStart(4, '0')}</p>
+                      </div>
                     </div>
                   </td>
-                  <td style={{ padding: '1.25rem 1.5rem', color: 'var(--text-muted)' }}>{user.email}</td>
-                  <td style={{ padding: '1.25rem 1.5rem', color: 'var(--text-muted)' }}>{user.telefono || 'N/A'}</td>
-                  <td style={{ padding: '1.25rem 1.5rem', textAlign: 'right' }}>
-                    <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem' }}>
-                      <button style={{ padding: '0.5rem', backgroundColor: 'transparent', color: 'var(--text-muted)' }}>
-                        <Edit2 size={18} />
-                      </button>
-                      <button 
+                  <td style={{ padding: 'var(--space-4)' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)', fontSize: 'var(--text-body-sm)', color: 'var(--color-text-secondary)' }}>
+                        <Mail size={12} /> {user.email}
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)', fontSize: 'var(--text-body-sm)', color: 'var(--color-text-muted)' }}>
+                        <Phone size={12} /> {user.telefono || 'Sin registrar'}
+                      </div>
+                    </div>
+                  </td>
+                  <td style={{ padding: 'var(--space-4)' }}>
+                    <Badge status={user.rol === 'admin' ? 'aprobado' : user.rol === 'empleado' ? 'pendiente' : 'activa'}>
+                      {user.rol}
+                    </Badge>
+                  </td>
+                  <td style={{ padding: 'var(--space-4)', borderRadius: '0 var(--radius-md) var(--radius-md) 0', textAlign: 'right' }}>
+                    <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 'var(--space-2)' }}>
+                      <Button variant="ghost" size="sm" style={{ padding: 'var(--space-2)' }}>
+                        <Edit2 size={16} />
+                      </Button>
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
                         onClick={() => handleDelete(user.id)}
-                        style={{ padding: '0.5rem', backgroundColor: 'transparent', color: 'var(--error)' }}
+                        style={{ padding: 'var(--space-2)', color: 'var(--color-error-500)' }}
                       >
-                        <Trash2 size={18} />
-                      </button>
+                        <Trash2 size={16} />
+                      </Button>
                     </div>
                   </td>
                 </tr>
@@ -126,93 +153,79 @@ const UsuariosPage: React.FC = () => {
             </tbody>
           </table>
         </div>
-      </div>
+      </Card>
 
       {showModal && (
-        <div style={{
-          position: 'fixed',
-          inset: 0,
-          backgroundColor: 'rgba(0,0,0,0.8)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 1000,
-          backdropFilter: 'blur(4px)'
-        }}>
-          <motion.div 
-            initial={{ scale: 0.9, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            className="glass" 
-            style={{ padding: '2.5rem', borderRadius: 'var(--radius)', width: '100%', maxWidth: '500px' }}
-          >
-            <h2 style={{ marginBottom: '1.5rem' }}>Crear Nuevo Usuario</h2>
-            <form onSubmit={handleCreate} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                <label style={{ fontSize: '0.875rem', fontWeight: 600 }}>Nombre Completo</label>
-                <div style={{ position: 'relative' }}>
-                  <User size={18} style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
-                  <input 
+        <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.85)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, backdropFilter: 'blur(8px)' }}>
+          <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} style={{ width: '100%', maxWidth: '520px' }}>
+            <Card title="Registro de Nuevo Cliente" subtitle="Ingrese los datos de identidad y contacto">
+              <form onSubmit={handleCreate} style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-4)' }}>
+                  <Input 
+                    label="Nombre"
                     required
-                    style={{ width: '100%', paddingLeft: '3rem' }}
+                    icon={<UserIcon size={16} />}
                     value={newUser.nombre}
                     onChange={(e) => setNewUser({...newUser, nombre: e.target.value})}
                   />
-                </div>
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                <label style={{ fontSize: '0.875rem', fontWeight: 600 }}>Correo Electrónico</label>
-                <div style={{ position: 'relative' }}>
-                  <Mail size={18} style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
-                  <input 
-                    type="email"
+                  <Input 
+                    label="Apellido"
                     required
-                    style={{ width: '100%', paddingLeft: '3rem' }}
-                    value={newUser.email}
-                    onChange={(e) => setNewUser({...newUser, email: e.target.value})}
+                    icon={<UserIcon size={16} />}
+                    value={newUser.apellido}
+                    onChange={(e) => setNewUser({...newUser, apellido: e.target.value})}
                   />
                 </div>
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                <label style={{ fontSize: '0.875rem', fontWeight: 600 }}>Teléfono</label>
-                <div style={{ position: 'relative' }}>
-                  <Phone size={18} style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
-                  <input 
-                    style={{ width: '100%', paddingLeft: '3rem' }}
+                
+                <Input 
+                  label="Email Corporativo / Personal"
+                  type="email"
+                  required
+                  icon={<Mail size={16} />}
+                  value={newUser.email}
+                  onChange={(e) => setNewUser({...newUser, email: e.target.value})}
+                />
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-4)' }}>
+                  <Input 
+                    label="Teléfono"
+                    icon={<Phone size={16} />}
                     value={newUser.telefono}
                     onChange={(e) => setNewUser({...newUser, telefono: e.target.value})}
                   />
+                  <Input 
+                    label="Documento (DUI/ID)"
+                    required
+                    value={newUser.dui}
+                    onChange={(e) => setNewUser({...newUser, dui: e.target.value})}
+                  />
                 </div>
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                <label style={{ fontSize: '0.875rem', fontWeight: 600 }}>Contraseña (mín. 8 caracteres)</label>
-                <input 
+
+                <Input 
+                  label="Contraseña de Acceso"
                   type="password"
                   required
                   minLength={8}
-                  style={{ width: '100%' }}
+                  icon={<Lock size={16} />}
                   value={newUser.password}
                   onChange={(e) => setNewUser({...newUser, password: e.target.value})}
                 />
-              </div>
-              <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem' }}>
-                <button 
-                  type="button"
-                  onClick={() => setShowModal(false)}
-                  style={{ flex: 1, padding: '0.75rem', backgroundColor: 'var(--primary-light)', border: '1px solid var(--border)', color: 'var(--text)' }}
-                >
-                  Cancelar
-                </button>
-                <button 
-                  type="submit"
-                  style={{ flex: 1, padding: '0.75rem', backgroundColor: 'var(--accent)', color: 'white' }}
-                >
-                  Crear Usuario
-                </button>
-              </div>
-            </form>
+
+                <div style={{ display: 'flex', gap: 'var(--space-4)', marginTop: 'var(--space-4)' }}>
+                  <Button type="button" variant="ghost" fullWidth onClick={() => setShowModal(false)}>Cancelar</Button>
+                  <Button type="submit" fullWidth>Finalizar Registro</Button>
+                </div>
+              </form>
+            </Card>
           </motion.div>
         </div>
       )}
+
+      <style>{`
+        .row-hover:hover {
+          background-color: rgba(201, 168, 76, 0.05) !important;
+        }
+      `}</style>
     </div>
   );
 };

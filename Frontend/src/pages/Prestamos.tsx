@@ -1,8 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { Plus, CheckCircle, XCircle, Clock } from 'lucide-react';
+import { Plus, CheckCircle, XCircle, Clock, Landmark, Calculator } from 'lucide-react';
 import { prestamoService, usuarioService, cuentaService } from '../services/api';
 import type { Prestamo, Usuario, Cuenta } from '../types';
+import Button from '../components/ui/Button';
+import Card from '../components/ui/Card';
+import Input from '../components/ui/Input';
+import Badge from '../components/ui/Badge';
 
 const PrestamosPage: React.FC = () => {
   const [prestamos, setPrestamos] = useState<Prestamo[]>([]);
@@ -84,6 +88,7 @@ const PrestamosPage: React.FC = () => {
   };
 
   const handleStatus = async (id: number) => {
+    if (!confirm('¿Desea denegar formalmente esta solicitud de crédito?')) return;
     try {
       await prestamoService.rechazarPrestamo(id);
       fetchData();
@@ -92,106 +97,75 @@ const PrestamosPage: React.FC = () => {
     }
   };
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'aprobado': return 'var(--success)';
-      case 'rechazado': return 'var(--error)';
-      default: return 'var(--warning)';
-    }
-  };
-
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'aprobado': return <CheckCircle size={18} />;
-      case 'rechazado': return <XCircle size={18} />;
-      default: return <Clock size={18} />;
-    }
-  };
-
   return (
     <div className="fade-in">
-      <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2.5rem' }}>
+      <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-10)' }}>
         <div>
-          <h1 style={{ fontSize: '2.25rem', marginBottom: '0.5rem' }}>Gestión de Préstamos</h1>
-          <p style={{ color: 'var(--text-muted)' }}>Solicitudes de crédito, aprobación y seguimiento.</p>
+          <h1 className="h1" style={{ marginBottom: 'var(--space-2)' }}>Líneas de Crédito</h1>
+          <p className="text-secondary">Gestión de capital circulante y financiamiento institucional.</p>
         </div>
-        <button 
-          onClick={() => setShowModal(true)}
-          style={{ 
-            backgroundColor: 'var(--accent)', 
-            color: 'white', 
-            padding: '0.75rem 1.5rem',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.5rem',
-            fontSize: '1rem'
-          }}
-        >
-          <Plus size={20} /> Solicitar Préstamo
-        </button>
+        <Button onClick={() => setShowModal(true)}>
+          <Plus size={18} style={{ marginRight: 'var(--space-2)' }} /> Solicitar Financiamiento
+        </Button>
       </header>
 
-      <div className="glass" style={{ borderRadius: 'var(--radius)', overflow: 'hidden' }}>
+      <Card title="Solicitudes de Activos" subtitle="Auditoría de solicitudes de crédito y estados de aprobación">
         <div className="table-container">
-          <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+          <table style={{ width: '100%', borderCollapse: 'separate', borderSpacing: '0 8px' }}>
             <thead>
-              <tr style={{ backgroundColor: 'rgba(255,255,255,0.03)' }}>
-                <th style={{ padding: '1.25rem 1.5rem', color: 'var(--text-muted)', fontWeight: 600 }}>Usuario</th>
-                <th style={{ padding: '1.25rem 1.5rem', color: 'var(--text-muted)', fontWeight: 600 }}>Monto</th>
-                <th style={{ padding: '1.25rem 1.5rem', color: 'var(--text-muted)', fontWeight: 600 }}>Términos</th>
-                <th style={{ padding: '1.25rem 1.5rem', color: 'var(--text-muted)', fontWeight: 600 }}>Estado</th>
-                <th style={{ padding: '1.25rem 1.5rem', color: 'var(--text-muted)', fontWeight: 600, textAlign: 'right' }}>Acciones</th>
+              <tr>
+                <th style={{ padding: 'var(--space-4)', color: 'var(--color-text-muted)', fontWeight: 600, fontSize: 'var(--text-label)', textTransform: 'uppercase', textAlign: 'left' }}>Cliente Solicitante</th>
+                <th style={{ padding: 'var(--space-4)', color: 'var(--color-text-muted)', fontWeight: 600, fontSize: 'var(--text-label)', textTransform: 'uppercase', textAlign: 'left' }}>Capital Solicitado</th>
+                <th style={{ padding: 'var(--space-4)', color: 'var(--color-text-muted)', fontWeight: 600, fontSize: 'var(--text-label)', textTransform: 'uppercase', textAlign: 'left' }}>Condiciones</th>
+                <th style={{ padding: 'var(--space-4)', color: 'var(--color-text-muted)', fontWeight: 600, fontSize: 'var(--text-label)', textTransform: 'uppercase', textAlign: 'left' }}>Estado de Riesgo</th>
+                <th style={{ padding: 'var(--space-4)', color: 'var(--color-text-muted)', fontWeight: 600, fontSize: 'var(--text-label)', textTransform: 'uppercase', textAlign: 'right' }}>Acciones Administrativas</th>
               </tr>
             </thead>
             <tbody>
               {loading ? (
-                <tr><td colSpan={5} style={{ textAlign: 'center', padding: '3rem' }}>Cargando préstamos...</td></tr>
+                <tr><td colSpan={5} style={{ textAlign: 'center', padding: 'var(--space-10)', color: 'var(--color-text-muted)' }}>Evaluando riesgos y solicitudes...</td></tr>
               ) : prestamos.length === 0 ? (
-                <tr><td colSpan={5} style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-muted)' }}>No hay solicitudes registradas.</td></tr>
+                <tr><td colSpan={5} style={{ textAlign: 'center', padding: 'var(--space-10)', color: 'var(--color-text-muted)' }}>No se han registrado solicitudes de crédito activas.</td></tr>
               ) : prestamos.map((p) => (
-                <tr key={p.id} style={{ borderBottom: '1px solid var(--border)' }}>
-                  <td style={{ padding: '1.25rem 1.5rem' }}>
-                    <div style={{ fontWeight: 600 }}>{p.usuario?.nombre || 'Cliente'}</div>
-                    <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>ID: {p.id}</div>
+                <tr key={p.id} style={{ backgroundColor: 'rgba(255,255,255,0.02)' }} className="row-hover">
+                  <td style={{ padding: 'var(--space-4)', borderRadius: 'var(--radius-md) 0 0 var(--radius-md)' }}>
+                    <div style={{ fontWeight: 600, color: 'white' }}>{p.usuario?.nombre} {p.usuario?.apellido}</div>
+                    <div className="font-mono" style={{ fontSize: '10px', color: 'var(--color-accent-500)', marginTop: '2px' }}>ID-REF: {p.id.toString().padStart(6, '0')}</div>
                   </td>
-                  <td style={{ padding: '1.25rem 1.5rem', fontSize: '1.125rem', fontWeight: 700 }}>
-                    ${Number(p.monto).toLocaleString()}
+                  <td style={{ padding: 'var(--space-4)' }}>
+                    <span className="text-amount" style={{ color: 'white' }}>${Number(p.monto).toLocaleString()}</span>
                   </td>
-                  <td style={{ padding: '1.25rem 1.5rem', color: 'var(--text-muted)', fontSize: '0.875rem' }}>
-                    <div>{p.plazoMeses} meses</div>
-                    <div>Tasa: {p.tasaInteres}%</div>
-                  </td>
-                  <td style={{ padding: '1.25rem 1.5rem' }}>
-                    <div style={{ 
-                      display: 'flex', 
-                      alignItems: 'center', 
-                      gap: '0.5rem', 
-                      color: getStatusColor(p.estado),
-                      textTransform: 'capitalize',
-                      fontWeight: 600
-                    }}>
-                      {getStatusIcon(p.estado)}
-                      {p.estado}
+                  <td style={{ padding: 'var(--space-4)' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                      <span style={{ fontSize: 'var(--text-body-sm)', color: 'var(--color-text-secondary)' }}>{p.plazoMeses} Meses</span>
+                      <span style={{ fontSize: '11px', color: 'var(--color-accent-500)', fontWeight: 600 }}>{p.tasaInteres}% T.A.E.</span>
                     </div>
                   </td>
-                  <td style={{ padding: '1.25rem 1.5rem', textAlign: 'right' }}>
+                  <td style={{ padding: 'var(--space-4)' }}>
+                    <Badge status={p.estado} />
+                  </td>
+                  <td style={{ padding: 'var(--space-4)', borderRadius: '0 var(--radius-md) var(--radius-md) 0', textAlign: 'right' }}>
                     {p.estado === 'pendiente' ? (
-                      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem' }}>
-                        <button 
+                      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 'var(--space-3)' }}>
+                        <Button 
+                          variant="secondary" 
+                          size="sm"
                           onClick={() => openApproval(p)}
-                          style={{ padding: '0.5rem 1rem', backgroundColor: 'var(--success)20', color: 'var(--success)', border: '1px solid var(--success)40' }}
+                          style={{ border: '1px solid var(--color-success-500)', color: 'var(--color-success-500)' }}
                         >
-                          Aprobar
-                        </button>
-                        <button 
+                          <CheckCircle size={14} style={{ marginRight: '6px' }} /> Aprobar
+                        </Button>
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
                           onClick={() => handleStatus(p.id)}
-                          style={{ padding: '0.5rem 1rem', backgroundColor: 'var(--error)20', color: 'var(--error)', border: '1px solid var(--error)40' }}
+                          style={{ color: 'var(--color-error-500)' }}
                         >
-                          Rechazar
-                        </button>
+                          <XCircle size={14} style={{ marginRight: '6px' }} /> Rechazar
+                        </Button>
                       </div>
                     ) : (
-                      <span style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>Finalizado</span>
+                      <span style={{ color: 'var(--color-text-muted)', fontSize: 'var(--text-caption)', textTransform: 'uppercase', letterSpacing: '1px' }}>Procesado</span>
                     )}
                   </td>
                 </tr>
@@ -199,81 +173,98 @@ const PrestamosPage: React.FC = () => {
             </tbody>
           </table>
         </div>
-      </div>
+      </Card>
 
       {showModal && (
-        <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.8)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, backdropFilter: 'blur(4px)' }}>
-          <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="glass" style={{ padding: '2.5rem', borderRadius: 'var(--radius)', width: '100%', maxWidth: '500px' }}>
-            <h2 style={{ marginBottom: '1.5rem' }}>Nueva Solicitud de Préstamo</h2>
-            <form onSubmit={handleRequest} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                <label style={{ fontSize: '0.875rem', fontWeight: 600 }}>Usuario Solicitante</label>
-                <select 
-                  required
-                  style={{ width: '100%' }}
-                  value={newPrestamo.usuarioId}
-                  onChange={(e) => setNewPrestamo({...newPrestamo, usuarioId: e.target.value})}
-                >
-                  <option value="">Seleccione un usuario</option>
-                  {usuarios.map(u => <option key={u.id} value={u.id}>{u.nombre}</option>)}
-                </select>
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                <label style={{ fontSize: '0.875rem', fontWeight: 600 }}>Monto del Préstamo</label>
-                <input 
+        <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.85)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, backdropFilter: 'blur(8px)' }}>
+          <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} style={{ width: '100%', maxWidth: '520px' }}>
+            <Card title="Nueva Solicitud de Crédito" subtitle="Análisis de viabilidad y asignación de fondos">
+              <form onSubmit={handleRequest} style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-5)' }}>
+                <div>
+                  <label style={{ display: 'block', marginBottom: 'var(--space-2)', fontSize: 'var(--text-label)', color: 'var(--color-text-secondary)', fontWeight: 600 }}>Titular del Crédito</label>
+                  <select 
+                    required
+                    style={{ 
+                      width: '100%', 
+                      backgroundColor: 'var(--color-primary-800)', 
+                      border: 'var(--border-subtle)', 
+                      borderRadius: 'var(--radius-md)', 
+                      padding: 'var(--space-3) var(--space-4)',
+                      color: 'white',
+                      outline: 'none'
+                    }}
+                    value={newPrestamo.usuarioId}
+                    onChange={(e) => setNewPrestamo({...newPrestamo, usuarioId: e.target.value})}
+                  >
+                    <option value="">Buscar cliente...</option>
+                    {usuarios.map(u => <option key={u.id} value={u.id}>{u.nombre} {u.apellido}</option>)}
+                  </select>
+                </div>
+
+                <Input 
+                  label="Capital de Inversión"
                   type="number"
                   required
                   min="100"
-                  style={{ width: '100%' }}
+                  icon={<Landmark size={16} />}
                   value={newPrestamo.monto}
                   onChange={(e) => setNewPrestamo({...newPrestamo, monto: e.target.value})}
                 />
-              </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                  <label style={{ fontSize: '0.875rem', fontWeight: 600 }}>Plazo (Meses)</label>
-                  <input 
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-4)' }}>
+                  <Input 
+                    label="Plazo (Meses)"
                     type="number"
                     required
                     min="1"
-                    style={{ width: '100%' }}
+                    icon={<Clock size={16} />}
                     value={newPrestamo.plazoMeses}
                     onChange={(e) => setNewPrestamo({...newPrestamo, plazoMeses: e.target.value})}
                   />
-                </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                  <label style={{ fontSize: '0.875rem', fontWeight: 600 }}>Tasa Interés (%)</label>
-                  <input 
+                  <Input 
+                    label="Tasa Pactada (%)"
                     type="number"
                     step="0.1"
                     required
                     min="0"
-                    style={{ width: '100%' }}
+                    icon={<Calculator size={16} />}
                     value={newPrestamo.tasaInteres}
                     onChange={(e) => setNewPrestamo({...newPrestamo, tasaInteres: e.target.value})}
                   />
                 </div>
-              </div>
-              <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem' }}>
-                <button type="button" onClick={() => setShowModal(false)} style={{ flex: 1, padding: '0.75rem', backgroundColor: 'var(--primary-light)', border: '1px solid var(--border)', color: 'var(--text)' }}>Cancelar</button>
-                <button type="submit" style={{ flex: 1, padding: '0.75rem', backgroundColor: 'var(--accent)', color: 'white' }}>Enviar Solicitud</button>
-              </div>
-            </form>
+
+                <div style={{ display: 'flex', gap: 'var(--space-4)', marginTop: 'var(--space-4)' }}>
+                  <Button type="button" variant="ghost" fullWidth onClick={() => setShowModal(false)}>Cancelar</Button>
+                  <Button type="submit" fullWidth>Emitir Solicitud</Button>
+                </div>
+              </form>
+            </Card>
           </motion.div>
         </div>
       )}
-      {/* Modal Aprobación (Selección de cuenta) */}
+
       {showApprovalModal && (
-        <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.8)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, backdropFilter: 'blur(4px)' }}>
-          <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="glass" style={{ padding: '2.5rem', borderRadius: 'var(--radius)', width: '100%', maxWidth: '400px' }}>
-            <h2 style={{ marginBottom: '0.5rem' }}>Aprobar Préstamo</h2>
-            <p style={{ color: 'var(--text-muted)', marginBottom: '1.5rem' }}>Seleccione la cuenta para el desembolso de ${Number(selectedPrestamo?.monto).toLocaleString()}</p>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                <label style={{ fontSize: '0.875rem', fontWeight: 600 }}>Cuenta de Destino</label>
+        <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.85)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, backdropFilter: 'blur(8px)' }}>
+          <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} style={{ width: '100%', maxWidth: '440px' }}>
+            <Card title="Aprobación y Desembolso" subtitle={`Asignación de capital para: ${selectedPrestamo?.usuario?.nombre}`}>
+              <div style={{ marginBottom: 'var(--space-6)', padding: 'var(--space-4)', backgroundColor: 'rgba(18, 183, 106, 0.05)', borderRadius: 'var(--radius-md)', border: '1px solid rgba(18, 183, 106, 0.2)' }}>
+                <p style={{ margin: 0, color: 'var(--color-success-500)', fontSize: 'var(--text-label)', fontWeight: 600 }}>Monto a Desembolsar</p>
+                <h2 className="text-amount-lg amt-positive" style={{ margin: '4px 0 0 0' }}>${Number(selectedPrestamo?.monto).toLocaleString()}</h2>
+              </div>
+              
+              <div style={{ marginBottom: 'var(--space-6)' }}>
+                <label style={{ display: 'block', marginBottom: 'var(--space-2)', fontSize: 'var(--text-label)', color: 'var(--color-text-secondary)', fontWeight: 600 }}>Cuenta Destino (Liquidez)</label>
                 <select 
                   required
-                  style={{ width: '100%' }}
+                  style={{ 
+                    width: '100%', 
+                    backgroundColor: 'var(--color-primary-800)', 
+                    border: 'var(--border-subtle)', 
+                    borderRadius: 'var(--radius-md)', 
+                    padding: 'var(--space-3) var(--space-4)',
+                    color: 'white',
+                    outline: 'none'
+                  }}
                   value={selectedAccountId}
                   onChange={(e) => setSelectedAccountId(e.target.value)}
                 >
@@ -282,14 +273,21 @@ const PrestamosPage: React.FC = () => {
                   ))}
                 </select>
               </div>
-              <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem' }}>
-                <button type="button" onClick={() => setShowApprovalModal(false)} style={{ flex: 1, padding: '0.75rem', backgroundColor: 'var(--primary-light)', border: '1px solid var(--border)', color: 'var(--text)' }}>Cancelar</button>
-                <button onClick={handleApprove} style={{ flex: 1, padding: '0.75rem', backgroundColor: 'var(--success)', color: 'white' }}>Confirmar Desembolso</button>
+
+              <div style={{ display: 'flex', gap: 'var(--space-4)' }}>
+                <Button type="button" variant="ghost" fullWidth onClick={() => setShowApprovalModal(false)}>Cancelar</Button>
+                <Button onClick={handleApprove} variant="primary" fullWidth>Ejecutar Desembolso</Button>
               </div>
-            </div>
+            </Card>
           </motion.div>
         </div>
       )}
+
+      <style>{`
+        .row-hover:hover {
+          background-color: rgba(201, 168, 76, 0.05) !important;
+        }
+      `}</style>
     </div>
   );
 };

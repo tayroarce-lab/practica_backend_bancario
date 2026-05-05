@@ -1,25 +1,16 @@
-const { Usuario } = require('../models');
+const { Usuario, RefreshToken, sequelize } = require('../models');
 const jwt = require('jsonwebtoken');
+const { generateRefreshToken, hashToken, getRefreshTokenExpiry } = require('../utils/tokenUtils');
 
 /**
- * Función auxiliar para generar tokens
+ * Función auxiliar para generar Access Token JWT
  */
-const generarTokens = (usuario) => {
-  const payload = { 
-    id: usuario.id, 
-    email: usuario.email, 
-    rol: usuario.rol 
-  };
-
-  const accessToken = jwt.sign(payload, process.env.JWT_SECRET, {
-    expiresIn: process.env.JWT_EXPIRES_IN || '8h'
-  });
-
-  const refreshToken = jwt.sign({ id: usuario.id }, process.env.JWT_REFRESH_SECRET, {
-    expiresIn: process.env.JWT_REFRESH_EXPIRES_IN || '7d'
-  });
-
-  return { accessToken, refreshToken };
+const generateAccessToken = (usuario) => {
+  return jwt.sign(
+    { id: usuario.id, email: usuario.email, rol: usuario.rol },
+    process.env.JWT_SECRET,
+    { expiresIn: process.env.JWT_EXPIRES_IN || '15m' }
+  );
 };
 
 const login = async (req, res) => {
@@ -38,16 +29,26 @@ const login = async (req, res) => {
       return res.status(401).json({ error: 'Credenciales inválidas' });
     }
 
-    // 3. Generar Tokens (Access + Refresh)
-    const { accessToken, refreshToken } = generarTokens(usuario);
+    // 3. Generar Tokens
+    const accessToken = generateAccessToken(usuario);
+    const plainRefreshToken = generateRefreshToken();
+    
+    // Guardar Refresh Token hasheado en DB
+    await RefreshToken.create({
+      token: hashToken(plainRefreshToken),
+      usuarioId: usuario.id,
+      expiresAt: getRefreshTokenExpiry(),
+      usado: false,
+      ipOrigen: req.ip || req.headers['x-forwarded-for']
+    });
 
-    // 4. Responder con datos y tokens
+    // 4. Responder con datos y tokens (en claro)
     const usuarioRespuesta = usuario.toJSON();
     delete usuarioRespuesta.password;
 
     res.json({
-      token: accessToken,
-      refreshToken,
+      accessToken,
+      refreshToken: plainRefreshToken,
       usuario: usuarioRespuesta
     });
   } catch (error) {
@@ -58,41 +59,78 @@ const login = async (req, res) => {
 
 const refreshToken = async (req, res) => {
   try {
-    const { refreshToken } = req.body;
+    const { refreshToken: plainRefreshToken } = req.body;
 
-    if (!refreshToken) {
-      return res.status(401).json({ error: 'Token de refresco no proporcionado' });
+    if (!plainRefreshToken) {
+      return res.status(400).json({ error: 'Refresh token no proporcionado' });
     }
 
-    // Verificar el refresh token
-    let decoded;
-    try {
-      decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET);
-    } catch (err) {
-      return res.status(401).json({ error: 'Token de refresco inválido o expirado' });
+    const hashedToken = hashToken(plainRefreshToken);
+
+    // Buscar el token en DB incluyendo al usuario
+    const storedToken = await RefreshToken.findOne({
+      where: { token: hashedToken },
+      include: [{ model: Usuario, as: 'usuario' }]
+    });
+
+    if (!storedToken) {
+      return res.status(401).json({ error: 'Token inválido' });
     }
 
-    // Buscar usuario para obtener su rol actual
-    const usuario = await Usuario.findByPk(decoded.id);
-    if (!usuario || !usuario.activo) {
+    // DETECCIÓN DE REUTILIZACIÓN (ROBO DE TOKEN)
+    if (storedToken.usado) {
+      // Si el token ya fue usado, invalidamos TODAS las sesiones del usuario por seguridad
+      await RefreshToken.destroy({ where: { usuarioId: storedToken.usuarioId } });
+      return res.status(401).json({ error: 'Token ya utilizado, sesión invalidada por seguridad' });
+    }
+
+    // VERIFICAR EXPIRACIÓN
+    if (storedToken.expiresAt < new Date()) {
+      return res.status(401).json({ error: 'Sesión expirada, inicia sesión nuevamente' });
+    }
+
+    // VERIFICAR USUARIO ACTIVO
+    if (!storedToken.usuario || !storedToken.usuario.activo) {
       return res.status(401).json({ error: 'Usuario no encontrado o inactivo' });
     }
 
-    // Generar solo un nuevo access token
-    const payload = { 
-      id: usuario.id, 
-      email: usuario.email, 
-      rol: usuario.rol 
-    };
-    
-    const accessToken = jwt.sign(payload, process.env.JWT_SECRET, {
-      expiresIn: process.env.JWT_EXPIRES_IN || '8h'
+    // MARCAR TOKEN ACTUAL COMO USADO
+    await storedToken.update({ usado: true });
+
+    // ROTACIÓN DE TOKENS
+    const newAccessToken = generateAccessToken(storedToken.usuario);
+    const newPlainRefreshToken = generateRefreshToken();
+
+    // Guardar el nuevo refresh token hasheado
+    await RefreshToken.create({
+      token: hashToken(newPlainRefreshToken),
+      usuarioId: storedToken.usuarioId,
+      expiresAt: getRefreshTokenExpiry(),
+      usado: false,
+      ipOrigen: req.ip || req.headers['x-forwarded-for']
     });
 
-    res.json({ token: accessToken });
+    res.json({
+      accessToken: newAccessToken,
+      refreshToken: newPlainRefreshToken
+    });
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: 'Error al refrescar el token' });
+  }
+};
+
+const logout = async (req, res) => {
+  try {
+    // Eliminar todos los refresh tokens del usuario autenticado
+    await RefreshToken.destroy({
+      where: { usuarioId: req.usuario.id }
+    });
+
+    res.json({ message: 'Sesión cerrada correctamente' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Error al cerrar la sesión' });
   }
 };
 
@@ -113,5 +151,6 @@ const getMe = async (req, res) => {
 module.exports = {
   login,
   refreshToken,
+  logout,
   getMe
 };

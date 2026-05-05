@@ -6,6 +6,7 @@ const TipoCuenta = require('./TipoCuenta');
 const Cuenta = require('./Cuenta');
 const Transaccion = require('./Transaccion');
 const Prestamo = require('./Prestamo');
+const RefreshToken = require('./RefreshToken');
 
 // Relaciones: Usuario hasMany Cuenta, Cuenta belongsTo Usuario
 Usuario.hasMany(Cuenta, { foreignKey: 'usuarioId', as: 'cuentas' });
@@ -32,13 +33,18 @@ Prestamo.belongsTo(Usuario, { foreignKey: 'usuarioId', as: 'usuario' });
 Cuenta.hasMany(Prestamo, { foreignKey: 'cuentaDesembolsoId', as: 'prestamosDesembolsados' });
 Prestamo.belongsTo(Cuenta, { foreignKey: 'cuentaDesembolsoId', as: 'cuentaDesembolso' });
 
+// Relaciones de Refresh Tokens
+Usuario.hasMany(RefreshToken, { foreignKey: 'usuarioId', as: 'refreshTokens', onDelete: 'CASCADE', onUpdate: 'CASCADE' });
+RefreshToken.belongsTo(Usuario, { foreignKey: 'usuarioId', as: 'usuario' });
+
 const db = {
   sequelize,
   Usuario,
   TipoCuenta,
   Cuenta,
   Transaccion,
-  Prestamo
+  Prestamo,
+  RefreshToken
 };
 
 module.exports = db;

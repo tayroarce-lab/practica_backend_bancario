@@ -2,13 +2,14 @@ import React, { useState } from 'react';
 import { NavLink } from 'react-router-dom';
 import { 
   LayoutDashboard, 
-  Users, 
-  CreditCard, 
+  UserCircle, 
+  Wallet, 
   Landmark, 
   History, 
   LogOut, 
   Menu, 
-  X 
+  X,
+  ShieldCheck
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
@@ -18,8 +19,8 @@ const Navbar: React.FC = () => {
 
   const navItems = [
     { to: '/', icon: <LayoutDashboard size={20} />, label: 'Dashboard' },
-    { to: '/usuarios', icon: <Users size={20} />, label: 'Usuarios' },
-    { to: '/cuentas', icon: <CreditCard size={20} />, label: 'Cuentas' },
+    { to: '/usuarios', icon: <UserCircle size={20} />, label: 'Clientes' },
+    { to: '/cuentas', icon: <Wallet size={20} />, label: 'Cuentas' },
     { to: '/prestamos', icon: <Landmark size={20} />, label: 'Préstamos' },
     { to: '/transacciones', icon: <History size={20} />, label: 'Historial' },
   ];
@@ -27,51 +28,58 @@ const Navbar: React.FC = () => {
   return (
     <>
       {/* Mobile Header */}
-      <header className="glass" style={{ 
+      <header style={{ 
         display: 'flex', 
         justifyContent: 'space-between', 
         alignItems: 'center', 
-        padding: '1rem', 
+        padding: 'var(--space-4)', 
         position: 'sticky', 
         top: 0, 
         zIndex: 50,
-        marginBottom: '1rem'
+        backgroundColor: 'var(--color-bg-surface)',
+        borderBottom: 'var(--border-subtle)',
+        marginBottom: 'var(--space-4)'
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-          <Landmark className="bac-brand-accent" size={24} />
-          <span className="bac-logo-text">Antigravity<span className="bac-brand-accent">Bank</span></span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)' }}>
+          <ShieldCheck color="var(--color-accent-500)" size={24} />
+          <span className="h4" style={{ margin: 0, color: 'var(--color-text-primary)' }}>OldMoney <span style={{ color: 'var(--color-accent-500)' }}>Bank</span></span>
         </div>
         <button 
           onClick={() => setIsOpen(!isOpen)}
-          style={{ backgroundColor: 'transparent', padding: '0.5rem' }}
+          style={{ backgroundColor: 'transparent', padding: 'var(--space-2)', border: 'none', color: 'var(--color-text-primary)', cursor: 'pointer' }}
         >
           {isOpen ? <X size={24} /> : <Menu size={24} />}
         </button>
       </header>
 
       {/* Sidebar Navigation */}
-      <nav className={`glass ${isOpen ? 'open' : ''}`} style={{
+      <nav className={`${isOpen ? 'open' : ''}`} style={{
         position: 'fixed',
         left: 0,
         top: 0,
         bottom: 0,
         width: '280px',
         zIndex: 100,
-        padding: '2rem 1.5rem',
+        backgroundColor: 'var(--color-bg-surface)',
+        borderRight: 'var(--border-subtle)',
+        padding: 'var(--space-8) var(--space-6)',
         display: 'flex',
         flexDirection: 'column',
-        gap: '2rem',
+        gap: 'var(--space-8)',
         transform: isOpen ? 'translateX(0)' : 'translateX(-100%)',
-        transition: 'transform 0.3s ease'
+        transition: 'transform 0.4s cubic-bezier(0.4, 0, 0.2, 1)'
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem' }}>
-          <div style={{ padding: '0.5rem', backgroundColor: 'var(--accent)', borderRadius: '8px' }}>
-            <Landmark size={24} color="white" />
+        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)' }}>
+          <div style={{ padding: 'var(--space-2)', backgroundColor: 'var(--color-accent-500)', borderRadius: 'var(--radius-md)' }}>
+            <ShieldCheck size={24} color="var(--color-primary-900)" />
           </div>
-          <span className="bac-logo-text">Antigravity<span className="bac-brand-accent">Bank</span></span>
+          <div style={{ display: 'flex', flexDirection: 'column' }}>
+            <span className="font-display" style={{ fontSize: '1.25rem', fontWeight: 700, color: 'white', lineHeight: 1 }}>OldMoney</span>
+            <span style={{ fontSize: '0.75rem', letterSpacing: '2px', color: 'var(--color-accent-500)', textTransform: 'uppercase', marginTop: '4px' }}>Bank Premium</span>
+          </div>
         </div>
 
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 'var(--space-2)' }}>
           {navItems.map(item => (
             <NavLink
               key={item.to}
@@ -81,43 +89,63 @@ const Navbar: React.FC = () => {
               style={({ isActive }) => ({
                 display: 'flex',
                 alignItems: 'center',
-                gap: '1rem',
-                padding: '0.875rem 1rem',
-                borderRadius: 'var(--radius)',
+                gap: 'var(--space-4)',
+                padding: 'var(--space-4) var(--space-4)',
+                borderRadius: 'var(--radius-md)',
                 textDecoration: 'none',
-                color: isActive ? 'white' : 'var(--text-muted)',
-                backgroundColor: isActive ? 'var(--accent)' : 'transparent',
-                transition: 'all 0.2s ease'
+                color: isActive ? 'var(--color-primary-900)' : 'var(--color-text-secondary)',
+                backgroundColor: isActive ? 'var(--color-accent-500)' : 'transparent',
+                boxShadow: isActive ? 'var(--shadow-gold)' : 'none',
+                transition: 'all 0.3s ease'
               })}
             >
               {item.icon}
-              <span style={{ fontWeight: 500 }}>{item.label}</span>
+              <span style={{ fontWeight: 600, fontSize: 'var(--text-body)' }}>{item.label}</span>
             </NavLink>
           ))}
         </div>
 
-        <div style={{ borderTop: '1px solid var(--border)', paddingTop: '1.5rem' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.5rem', padding: '0 0.5rem' }}>
-            <div style={{ width: '40px', height: '40px', borderRadius: '50%', backgroundColor: 'var(--accent)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700 }}>
+        <div style={{ borderTop: 'var(--border-subtle)', paddingTop: 'var(--space-6)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-4)', marginBottom: 'var(--space-6)', padding: '0 var(--space-2)' }}>
+            <div style={{ 
+              width: '44px', 
+              height: '44px', 
+              borderRadius: '50%', 
+              backgroundColor: 'var(--color-bg-subtle)', 
+              border: 'var(--border-gold)',
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: 'center', 
+              fontWeight: 700,
+              color: 'var(--color-accent-500)'
+            }}>
               {user?.nombre?.[0]}{user?.apellido?.[0]}
             </div>
-            <div>
-              <p style={{ fontSize: '0.875rem', fontWeight: 600 }}>{user?.nombre}</p>
-              <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Panel Administrativo</p>
+            <div style={{ overflow: 'hidden' }}>
+              <p style={{ fontSize: 'var(--text-body)', fontWeight: 600, color: 'white', margin: 0, whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>{user?.nombre}</p>
+              <p style={{ fontSize: 'var(--text-caption)', color: 'var(--color-accent-500)', margin: 0, textTransform: 'capitalize' }}>{user?.rol}</p>
             </div>
           </div>
           <button 
             onClick={logout}
             style={{ 
               width: '100%', 
-              padding: '0.875rem', 
-              backgroundColor: 'rgba(239, 68, 68, 0.1)', 
-              color: 'var(--error)', 
-              gap: '0.75rem',
-              border: '1px solid rgba(239, 68, 68, 0.2)'
+              padding: 'var(--space-4)', 
+              backgroundColor: 'rgba(240, 68, 56, 0.1)', 
+              color: 'var(--color-error-500)', 
+              borderRadius: 'var(--radius-md)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 'var(--space-3)',
+              border: '1px solid rgba(240, 68, 56, 0.2)',
+              cursor: 'pointer',
+              fontWeight: 600,
+              transition: 'all 0.3s ease'
             }}
+            className="logout-btn"
           >
-            <LogOut size={20} /> Cerrar Sesión
+            <LogOut size={18} /> Cerrar Sesión
           </button>
         </div>
       </nav>
@@ -129,34 +157,30 @@ const Navbar: React.FC = () => {
           style={{
             position: 'fixed',
             inset: 0,
-            backgroundColor: 'rgba(0,0,0,0.6)',
+            backgroundColor: 'rgba(0,0,0,0.7)',
             backdropFilter: 'blur(4px)',
             zIndex: 90
           }}
         />
       )}
 
-      {/* Desktop Styling Fix (to make the nav behave like a sidebar on large screens) */}
       <style>{`
         @media (min-width: 1024px) {
           nav {
             transform: translateX(0) !important;
             position: sticky !important;
             height: 100vh;
-            border-radius: 0 !important;
-            border-left: none !important;
-            border-top: none !important;
-            border-bottom: none !important;
           }
           header { display: none !important; }
-          .main-content { margin-left: 0 !important; }
         }
-        .nav-link:hover {
-          background-color: rgba(255, 255, 255, 0.05);
+        .nav-link:hover:not(.active) {
+          background-color: var(--color-bg-subtle);
           color: white;
+          transform: translateX(4px);
         }
-        .nav-link.active:hover {
-          background-color: var(--accent-hover);
+        .logout-btn:hover {
+          background-color: var(--color-error-500) !important;
+          color: white !important;
         }
       `}</style>
     </>

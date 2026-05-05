@@ -1,10 +1,24 @@
 import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { Landmark, Users, CreditCard, ArrowUpRight, ArrowDownLeft, History, Send, UserPlus } from 'lucide-react';
+import { 
+  Landmark, 
+  UserCircle, 
+  Wallet, 
+  ArrowUpRight, 
+  ArrowDownLeft, 
+  History, 
+  Send, 
+  UserPlus,
+  ShieldCheck,
+  TrendingUp,
+  ArrowLeftRight
+} from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { usuarioService, cuentaService, transaccionService } from '../services/api';
 import type { Transaccion } from '../types';
+import Card from '../components/ui/Card';
+import Button from '../components/ui/Button';
 
 const Dashboard: React.FC = () => {
   const navigate = useNavigate();
@@ -35,10 +49,8 @@ const Dashboard: React.FC = () => {
           transaccionesHoy: txs.data.length
         });
 
-        // Get last 5 transactions
         setRecentTxs(txs.data.slice(0, 5));
 
-        // Prepare chart data (simple aggregation by date)
         const dailyData = txs.data.reduce((acc: any, tx: Transaccion) => {
           const date = new Date(tx.createdAt).toLocaleDateString('es-ES', { day: '2-digit', month: 'short' });
           acc[date] = (acc[date] || 0) + Number(tx.monto);
@@ -56,24 +68,24 @@ const Dashboard: React.FC = () => {
   }, []);
 
   const statItems = [
-    { label: 'Total Usuarios', value: stats.usuarios, icon: <Users />, color: '#3b82f6' },
-    { label: 'Cuentas Activas', value: stats.cuentas, icon: <CreditCard />, color: '#10b981' },
-    { label: 'Capital Total', value: `$${stats.saldoTotal.toLocaleString()}`, icon: <Landmark />, color: '#f59e0b' },
-    { label: 'Transacciones', value: stats.transaccionesHoy, icon: <ArrowUpRight />, color: '#ef4444' },
+    { label: 'Total Clientes', value: stats.usuarios, icon: <UserCircle size={24} />, color: 'var(--color-primary-500)' },
+    { label: 'Cuentas Activas', value: stats.cuentas, icon: <Wallet size={24} />, color: 'var(--color-success-500)' },
+    { label: 'Patrimonio Total', value: `$${stats.saldoTotal.toLocaleString()}`, icon: <Landmark size={24} />, color: 'var(--color-accent-500)' },
+    { label: 'Operaciones Hoy', value: stats.transaccionesHoy, icon: <TrendingUp size={24} />, color: 'var(--color-info-500)' },
   ];
 
   return (
     <div className="fade-in">
-      <header style={{ marginBottom: '2.5rem' }}>
-        <h1 style={{ fontSize: '2.25rem', marginBottom: '0.5rem' }}>Dashboard</h1>
-        <p style={{ color: 'var(--text-muted)' }}>Bienvenido al sistema de gestión bancaria centralizado.</p>
+      <header style={{ marginBottom: 'var(--space-10)' }}>
+        <h1 className="h1" style={{ marginBottom: 'var(--space-2)' }}>Panel General</h1>
+        <p className="text-secondary">Gestión integral de patrimonio y operaciones bancarias.</p>
       </header>
 
       <div style={{ 
         display: 'grid', 
         gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', 
-        gap: '1.5rem',
-        marginBottom: '3rem'
+        gap: 'var(--space-6)',
+        marginBottom: 'var(--space-10)'
       }}>
         {statItems.map((item, index) => (
           <motion.div
@@ -81,30 +93,29 @@ const Dashboard: React.FC = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: index * 0.1 }}
-            className="glass"
+            className="card"
             style={{
-              padding: '1.5rem',
-              borderRadius: 'var(--radius)',
               display: 'flex',
               flexDirection: 'column',
-              gap: '1rem'
+              gap: 'var(--space-4)'
             }}
           >
             <div style={{ 
-              backgroundColor: `${item.color}20`, 
+              backgroundColor: `${item.color}15`, 
               color: item.color,
-              width: '48px',
-              height: '48px',
-              borderRadius: '12px',
+              width: '52px',
+              height: '52px',
+              borderRadius: 'var(--radius-md)',
               display: 'flex',
               alignItems: 'center',
-              justifyContent: 'center'
+              justifyContent: 'center',
+              border: `1px solid ${item.color}30`
             }}>
               {item.icon}
             </div>
             <div>
-              <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>{item.label}</p>
-              <h3 style={{ fontSize: '1.75rem', marginTop: '0.25rem' }}>{item.value}</h3>
+              <p className="text-muted" style={{ fontSize: 'var(--text-label)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '1px' }}>{item.label}</p>
+              <h3 className={item.label.includes('Patrimonio') ? 'text-amount-lg text-gold' : 'h2'} style={{ marginTop: 'var(--space-1)' }}>{item.value}</h3>
             </div>
           </motion.div>
         ))}
@@ -113,105 +124,111 @@ const Dashboard: React.FC = () => {
       <div style={{ 
         display: 'grid', 
         gridTemplateColumns: '1fr',
-        gap: '1.5rem' 
+        gap: 'var(--space-6)' 
       }} className="dashboard-grid">
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-          <section className="glass" style={{ padding: '1.5rem', borderRadius: 'var(--radius)' }}>
-            <h2 style={{ marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '1.25rem' }}>
-              <History size={24} /> Flujo de Capital (Transacciones)
-            </h2>
-            <div style={{ height: '300px', width: '100%' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-6)' }}>
+          <Card 
+            title="Flujo de Capital" 
+            subtitle="Análisis de movimientos en tiempo real"
+          >
+            <div style={{ height: '320px', width: '100%' }}>
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart data={chartData}>
                   <defs>
                     <linearGradient id="colorTotal" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="var(--accent)" stopOpacity={0.3}/>
-                      <stop offset="95%" stopColor="var(--accent)" stopOpacity={0}/>
+                      <stop offset="5%" stopColor="var(--color-accent-500)" stopOpacity={0.2}/>
+                      <stop offset="95%" stopColor="var(--color-accent-500)" stopOpacity={0}/>
                     </linearGradient>
                   </defs>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border)" />
-                  <XAxis dataKey="name" stroke="var(--text-muted)" fontSize={12} tickLine={false} axisLine={false} />
-                  <YAxis stroke="var(--text-muted)" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(v) => `$${v}`} />
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(201,168,76,0.1)" />
+                  <XAxis dataKey="name" stroke="var(--color-text-muted)" fontSize={11} tickLine={false} axisLine={false} />
+                  <YAxis stroke="var(--color-text-muted)" fontSize={11} tickLine={false} axisLine={false} tickFormatter={(v) => `$${v}`} />
                   <Tooltip 
-                    contentStyle={{ backgroundColor: 'var(--card-bg)', border: '1px solid var(--border)', borderRadius: '8px' }}
-                    itemStyle={{ color: 'var(--text)' }}
+                    contentStyle={{ backgroundColor: 'var(--color-bg-surface)', border: 'var(--border-subtle)', borderRadius: 'var(--radius-md)' }}
+                    itemStyle={{ color: 'var(--color-accent-500)', fontWeight: 600 }}
+                    labelStyle={{ color: 'white', marginBottom: '4px' }}
                   />
-                  <Area type="monotone" dataKey="total" stroke="var(--accent)" fillOpacity={1} fill="url(#colorTotal)" />
+                  <Area type="monotone" dataKey="total" stroke="var(--color-accent-500)" strokeWidth={3} fillOpacity={1} fill="url(#colorTotal)" />
                 </AreaChart>
               </ResponsiveContainer>
             </div>
-          </section>
+          </Card>
 
-          <section className="glass" style={{ padding: '1.5rem', borderRadius: 'var(--radius)' }}>
-            <h2 style={{ marginBottom: '1.5rem', fontSize: '1.25rem' }}>Actividad Reciente</h2>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+          <Card title="Actividad Reciente" subtitle="Últimas transacciones registradas">
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
               {recentTxs.length > 0 ? recentTxs.map(tx => (
-                <div key={tx.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.75rem', backgroundColor: 'rgba(255,255,255,0.02)', borderRadius: '8px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                    <div style={{ padding: '0.5rem', backgroundColor: 'var(--primary-light)', borderRadius: '8px', color: tx.tipo === 'deposito' ? 'var(--success)' : 'var(--error)' }}>
-                      {tx.tipo === 'deposito' ? <ArrowDownLeft size={16} /> : <ArrowUpRight size={16} />}
+                <div key={tx.id} style={{ 
+                  display: 'flex', 
+                  justifyContent: 'space-between', 
+                  alignItems: 'center', 
+                  padding: 'var(--space-4)', 
+                  backgroundColor: 'rgba(255,255,255,0.02)', 
+                  borderRadius: 'var(--radius-md)',
+                  border: '1px solid rgba(255,255,255,0.03)'
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-4)' }}>
+                    <div style={{ 
+                      padding: 'var(--space-3)', 
+                      backgroundColor: tx.tipo === 'deposito' ? 'rgba(18, 183, 106, 0.1)' : tx.tipo === 'retiro' ? 'rgba(240, 68, 56, 0.1)' : 'rgba(201, 168, 76, 0.1)', 
+                      borderRadius: 'var(--radius-md)', 
+                      color: tx.tipo === 'deposito' ? 'var(--color-success-500)' : tx.tipo === 'retiro' ? 'var(--color-error-500)' : 'var(--color-accent-500)'
+                    }}>
+                      {tx.tipo === 'deposito' ? <ArrowDownLeft size={18} /> : tx.tipo === 'retiro' ? <ArrowUpRight size={18} /> : <ArrowLeftRight size={18} />}
                     </div>
                     <div>
-                      <p style={{ fontWeight: 600, fontSize: '0.875rem', textTransform: 'capitalize' }}>{tx.tipo}</p>
-                      <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{new Date(tx.createdAt).toLocaleString()}</p>
+                      <p className="font-display" style={{ fontWeight: 600, fontSize: 'var(--text-body)', textTransform: 'capitalize', color: 'white' }}>{tx.tipo}</p>
+                      <p style={{ fontSize: 'var(--text-caption)', color: 'var(--color-text-muted)' }}>{new Date(tx.createdAt).toLocaleString()}</p>
                     </div>
                   </div>
-                  <p style={{ fontWeight: 700, color: tx.tipo === 'deposito' ? 'var(--success)' : 'var(--text)' }}>
-                    {tx.tipo === 'deposito' ? '+' : '-'}${Number(tx.monto).toLocaleString()}
+                  <p className={`text-amount ${tx.tipo === 'deposito' ? 'amt-positive' : tx.tipo === 'retiro' ? 'amt-negative' : 'amt-neutral'}`}>
+                    {tx.tipo === 'deposito' ? '+' : tx.tipo === 'retiro' ? '-' : '↔'}${Number(tx.monto).toLocaleString()}
                   </p>
                 </div>
               )) : (
-                <p style={{ color: 'var(--text-muted)', textAlign: 'center', padding: '1rem' }}>No hay transacciones recientes.</p>
+                <p className="text-muted" style={{ textAlign: 'center', padding: 'var(--space-4)' }}>No hay transacciones recientes.</p>
               )}
             </div>
-          </section>
+          </Card>
         </div>
 
-        <section className="glass" style={{ padding: '1.5rem', borderRadius: 'var(--radius)', height: 'fit-content' }}>
-          <h2 style={{ marginBottom: '1.5rem', fontSize: '1.25rem' }}>Acciones Rápidas</h2>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-            <button 
+        <Card title="Operaciones Rápidas" subtitle="Acciones de gestión directa">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
+            <Button 
               onClick={() => navigate('/transacciones')}
-              style={{ 
-                backgroundColor: 'var(--accent)', 
-                color: 'white', 
-                padding: '1rem',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '0.75rem',
-                fontSize: '1rem',
-                fontWeight: 600,
-                boxShadow: '0 4px 12px rgba(59, 130, 246, 0.3)'
-              }}>
-              <Send size={18} /> Nueva Transferencia
-            </button>
-            <button 
+              fullWidth
+            >
+              <Send size={18} style={{ marginRight: 'var(--space-3)' }} /> Nueva Transferencia
+            </Button>
+            <Button 
               onClick={() => navigate('/usuarios')}
-              style={{ 
-                backgroundColor: 'var(--primary-light)', 
-                color: 'var(--text)', 
-                padding: '1rem',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '0.75rem',
-                fontSize: '1rem',
-                fontWeight: 600,
-                border: '1px solid var(--border)'
-              }}>
-              <UserPlus size={18} /> Registrar Usuario
-            </button>
+              variant="secondary"
+              fullWidth
+            >
+              <UserPlus size={18} style={{ marginRight: 'var(--space-3)' }} /> Registrar Cliente
+            </Button>
           </div>
           
-          <div style={{ marginTop: '2rem', padding: '1rem', backgroundColor: 'var(--primary-light)', borderRadius: 'var(--radius)', border: '1px solid var(--border)' }}>
-            <h4 style={{ marginBottom: '0.5rem', fontSize: '0.875rem' }}>Estado del Sistema</h4>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: 'var(--success)' }}></div>
-              <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Sincronizado con API</p>
+          <div style={{ 
+            marginTop: 'var(--space-10)', 
+            padding: 'var(--space-5)', 
+            backgroundColor: 'var(--color-bg-subtle)', 
+            borderRadius: 'var(--radius-md)', 
+            border: 'var(--border-subtle)',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 'var(--space-3)'
+          }}>
+            <h4 style={{ fontSize: 'var(--text-label)', fontWeight: 600, color: 'white', textTransform: 'uppercase', letterSpacing: '1px' }}>Seguridad del Sistema</h4>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)' }}>
+              <ShieldCheck size={16} color="var(--color-success-500)" />
+              <p style={{ fontSize: 'var(--text-caption)', color: 'var(--color-text-muted)' }}>Protección biométrica activa</p>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)' }}>
+              <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: 'var(--color-success-500)' }}></div>
+              <p style={{ fontSize: 'var(--text-caption)', color: 'var(--color-text-muted)' }}>Servidores encriptados</p>
             </div>
           </div>
-        </section>
+        </Card>
       </div>
     </div>
   );
