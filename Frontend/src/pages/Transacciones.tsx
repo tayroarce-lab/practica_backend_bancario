@@ -1,12 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { ArrowLeftRight, Send, Search, Filter, ArrowUpRight, ArrowDownLeft, Clock, History } from 'lucide-react';
+import { ArrowLeftRight, Send, Search, Filter, ArrowUpRight, ArrowDownLeft, Clock } from 'lucide-react';
 import { transaccionService, cuentaService } from '../services/api';
 import type { Transaccion, Cuenta } from '../types';
 import Button from '../components/ui/Button';
 import Card from '../components/ui/Card';
 import Input from '../components/ui/Input';
-import Badge from '../components/ui/Badge';
 
 const TransaccionesPage: React.FC = () => {
   const [transacciones, setTransacciones] = useState<Transaccion[]>([]);

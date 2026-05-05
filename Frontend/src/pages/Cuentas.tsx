@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { CreditCard, Plus, ArrowUpRight, ArrowDownLeft, Lock, Unlock, X } from 'lucide-react';
+import { CreditCard, Plus, ArrowUpRight, ArrowDownLeft, Lock, Unlock } from 'lucide-react';
 import { toast } from 'sonner';
 import { cuentaService, usuarioService } from '../services/api';
 import type { Cuenta, Usuario } from '../types';

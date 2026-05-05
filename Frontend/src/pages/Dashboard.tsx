@@ -6,7 +6,6 @@ import {
   Wallet, 
   ArrowUpRight, 
   ArrowDownLeft, 
-  History, 
   Send, 
   UserPlus,
   ShieldCheck,
