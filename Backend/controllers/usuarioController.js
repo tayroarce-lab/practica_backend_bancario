@@ -153,10 +153,39 @@ const eliminarUsuario = async (req, res) => {
   }
 };
 
+// Cambiar rol de usuario (Solo Admin)
+const cambiarRol = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { rol } = req.body;
+    const rolesValidos = ['admin', 'empleado', 'cliente'];
+
+    if (!rolesValidos.includes(rol)) {
+      return res.status(400).json({ error: `Rol inválido. Valores permitidos: ${rolesValidos.join(', ')}` });
+    }
+
+    const usuario = await Usuario.findByPk(id);
+    if (!usuario) {
+      return res.status(404).json({ error: 'Usuario no encontrado' });
+    }
+
+    await usuario.update({ rol });
+
+    res.json({ 
+      message: 'Rol actualizado correctamente', 
+      usuario: { id: usuario.id, email: usuario.email, rol: usuario.rol } 
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Error al cambiar el rol' });
+  }
+};
+
 module.exports = {
   crearUsuario,
   obtenerUsuarios,
   obtenerUsuarioPorId,
   actualizarUsuario,
-  eliminarUsuario
+  eliminarUsuario,
+  cambiarRol
 };

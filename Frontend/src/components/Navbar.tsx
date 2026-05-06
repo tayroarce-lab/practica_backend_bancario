@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { NavLink } from 'react-router-dom';
+import { NavLink, useNavigate } from 'react-router-dom';
 import { 
   LayoutDashboard, 
   UserCircle, 
@@ -16,6 +16,7 @@ import { useAuth } from '../context/AuthContext';
 const Navbar: React.FC = () => {
   const { logout, user } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
+  const navigate = useNavigate();
 
   const navItems = [
     { to: '/', icon: <LayoutDashboard size={20} />, label: 'Dashboard' },
@@ -104,13 +105,13 @@ const Navbar: React.FC = () => {
             </NavLink>
           ))}
           
-          {/* Quick Action Button for Admin/Employee */}
-          {(user?.rol === 'admin' || user?.rol === 'empleado') && (
+          {/* Quick Action Button for Admin */}
+          {user?.rol === 'admin' && (
             <div style={{ marginTop: 'var(--space-4)', padding: '0 var(--space-2)' }}>
-              <NavLink 
-                to="/usuarios?create=true" 
-                onClick={() => setIsOpen(false)}
+              <button 
+                onClick={() => { navigate('/usuarios'); setIsOpen(false); }}
                 style={{
+                  width: '100%',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -120,7 +121,7 @@ const Navbar: React.FC = () => {
                   border: '1px dashed var(--color-accent-500)',
                   borderRadius: 'var(--radius-md)',
                   color: 'var(--color-accent-500)',
-                  textDecoration: 'none',
+                  cursor: 'pointer',
                   fontSize: 'var(--text-body-sm)',
                   fontWeight: 600,
                   transition: 'all 0.3s ease'
@@ -128,7 +129,7 @@ const Navbar: React.FC = () => {
                 className="quick-action-nav"
               >
                 + Nuevo Usuario
-              </NavLink>
+              </button>
             </div>
           )}
         </div>

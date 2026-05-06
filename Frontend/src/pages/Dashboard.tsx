@@ -256,7 +256,7 @@ const Dashboard: React.FC = () => {
             >
               <Send size={18} style={{ marginRight: 'var(--space-3)' }} /> Nueva Transferencia
             </Button>
-            {(user?.rol === 'admin' || user?.rol === 'empleado') && (
+            {user?.rol === 'admin' && (
               <Button 
                 onClick={() => navigate('/usuarios')}
                 variant="secondary"

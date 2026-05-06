@@ -7,6 +7,7 @@ import Card from '../components/ui/Card';
 import Badge from '../components/ui/Badge';
 import Skeleton from '../components/ui/Skeleton';
 import { toast } from 'sonner';
+import { useAuth } from '../context/AuthContext';
 import Modal from '../components/ui/Modal';
 import UserForm from '../components/usuarios/UserForm';
 
@@ -15,6 +16,8 @@ const UsuariosPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [editingUser, setEditingUser] = useState<Usuario | null>(null);
+  const { user: authUser } = useAuth();
+  const isAdmin = authUser?.rol === 'admin';
 
   const fetchUsuarios = async () => {
     try {
@@ -48,6 +51,16 @@ const UsuariosPage: React.FC = () => {
     toast.info('La edición de usuarios se implementará en la siguiente fase.');
   };
 
+  const handleChangeRol = async (id: number, nuevoRol: string) => {
+    try {
+      await usuarioService.cambiarRol(id, nuevoRol);
+      toast.success('Rol actualizado correctamente');
+      fetchUsuarios();
+    } catch (error) {
+      // handled by interceptor
+    }
+  };
+
 
 
   const handleDelete = async (id: number) => {
@@ -69,9 +82,11 @@ const UsuariosPage: React.FC = () => {
           <h1 className="h1" style={{ marginBottom: 'var(--space-2)' }}>Gestión de Usuarios</h1>
           <p className="text-secondary">Control de acceso y perfiles para administradores, empleados y clientes.</p>
         </div>
-        <Button onClick={handleOpenCreate}>
-          <UserPlus size={18} style={{ marginRight: 'var(--space-2)' }} /> Registrar Usuario
-        </Button>
+        {isAdmin && (
+          <Button onClick={handleOpenCreate}>
+            <UserPlus size={18} style={{ marginRight: 'var(--space-2)' }} /> Registrar Usuario
+          </Button>
+        )}
       </header>
 
       <Card title="Directorio de Usuarios" subtitle="Listado centralizado de personal y clientes">
@@ -92,9 +107,11 @@ const UsuariosPage: React.FC = () => {
               }} 
             />
           </div>
-          <Button onClick={handleOpenCreate}>
-            <UserPlus size={18} style={{ marginRight: 'var(--space-2)' }} /> Registrar Usuario
-          </Button>
+          {isAdmin && (
+            <Button onClick={handleOpenCreate}>
+              <UserPlus size={18} style={{ marginRight: 'var(--space-2)' }} /> Registrar Usuario
+            </Button>
+          )}
         </div>
 
         <div className="table-container">
@@ -148,9 +165,31 @@ const UsuariosPage: React.FC = () => {
                     </div>
                   </td>
                   <td style={{ padding: 'var(--space-4)' }}>
-                    <Badge status={user.rol === 'admin' ? 'aprobado' : user.rol === 'empleado' ? 'pendiente' : 'activa'}>
-                      {user.rol}
-                    </Badge>
+                    {isAdmin && user.id !== authUser?.id ? (
+                      <select
+                        value={user.rol}
+                        onChange={(e) => handleChangeRol(user.id, e.target.value)}
+                        style={{
+                          backgroundColor: 'var(--color-primary-800)',
+                          color: 'var(--color-accent-500)',
+                          border: 'var(--border-subtle)',
+                          borderRadius: 'var(--radius-md)',
+                          padding: 'var(--space-2) var(--space-3)',
+                          fontSize: 'var(--text-body-sm)',
+                          fontWeight: 600,
+                          cursor: 'pointer',
+                          outline: 'none'
+                        }}
+                      >
+                        <option value="admin">Admin</option>
+                        <option value="empleado">Empleado</option>
+                        <option value="cliente">Cliente</option>
+                      </select>
+                    ) : (
+                      <Badge status={user.rol === 'admin' ? 'aprobado' : user.rol === 'empleado' ? 'pendiente' : 'activa'}>
+                        {user.rol}
+                      </Badge>
+                    )}
                   </td>
                   <td style={{ padding: 'var(--space-4)', borderRadius: '0 var(--radius-md) var(--radius-md) 0', textAlign: 'right' }}>
                     <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 'var(--space-2)' }}>

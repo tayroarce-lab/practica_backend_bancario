@@ -34,4 +34,10 @@ router.delete('/:id',
   usuarioController.eliminarUsuario
 );
 
+// Gestión de Roles (Solo Admin)
+router.put('/:id/rol',
+  authorize('admin'),
+  usuarioController.cambiarRol
+);
+
 module.exports = router;

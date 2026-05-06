@@ -125,6 +125,7 @@ export const usuarioService = {
   actualizarUsuario: (id: number, data: Partial<CreateUsuarioDTO>) => 
     api.put<Usuario>(`/usuarios/${id}`, sanitize(data)),
   eliminarUsuario: (id: number) => api.delete(`/usuarios/${id}`),
+  cambiarRol: (id: number, rol: string) => api.put(`/usuarios/${id}/rol`, { rol }),
 };
 
 export const cuentaService = {
