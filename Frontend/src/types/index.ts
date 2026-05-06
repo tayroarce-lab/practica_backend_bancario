@@ -61,6 +61,7 @@ export interface CreateUsuarioDTO {
   password?: string;
   dui?: string;
   fechaNacimiento?: string;
+  rol?: 'admin' | 'empleado' | 'cliente';
 }
 
 export interface CreateCuentaDTO {

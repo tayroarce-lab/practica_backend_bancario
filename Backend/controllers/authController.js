@@ -13,6 +13,16 @@ const generateAccessToken = (usuario) => {
   );
 };
 
+/**
+ * Opciones de cookie seguras
+ */
+const cookieOptions = {
+  httpOnly: true,
+  secure: process.env.NODE_ENV === 'production', // Solo HTTPS en producción
+  sameSite: 'lax', // Protege contra CSRF
+  maxAge: 8 * 60 * 60 * 1000 // 8 horas (coincide con el refresh token)
+};
+
 const login = async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -42,13 +52,15 @@ const login = async (req, res) => {
       ipOrigen: req.ip || req.headers['x-forwarded-for']
     });
 
-    // 4. Responder con datos y tokens (en claro)
+    // 4. Configurar Cookies
+    res.cookie('accessToken', accessToken, { ...cookieOptions, maxAge: 15 * 60 * 1000 }); // 15 min
+    res.cookie('refreshToken', plainRefreshToken, cookieOptions);
+
+    // 5. Responder con datos del usuario
     const usuarioRespuesta = usuario.toJSON();
     delete usuarioRespuesta.password;
 
     res.json({
-      accessToken,
-      refreshToken: plainRefreshToken,
       usuario: usuarioRespuesta
     });
   } catch (error) {
@@ -59,7 +71,7 @@ const login = async (req, res) => {
 
 const refreshToken = async (req, res) => {
   try {
-    const { refreshToken: plainRefreshToken } = req.body;
+    const plainRefreshToken = req.cookies.refreshToken;
 
     if (!plainRefreshToken) {
       return res.status(400).json({ error: 'Refresh token no proporcionado' });
@@ -79,13 +91,16 @@ const refreshToken = async (req, res) => {
 
     // DETECCIÓN DE REUTILIZACIÓN (ROBO DE TOKEN)
     if (storedToken.usado) {
-      // Si el token ya fue usado, invalidamos TODAS las sesiones del usuario por seguridad
       await RefreshToken.destroy({ where: { usuarioId: storedToken.usuarioId } });
+      res.clearCookie('accessToken');
+      res.clearCookie('refreshToken');
       return res.status(401).json({ error: 'Token ya utilizado, sesión invalidada por seguridad' });
     }
 
     // VERIFICAR EXPIRACIÓN
     if (storedToken.expiresAt < new Date()) {
+      res.clearCookie('accessToken');
+      res.clearCookie('refreshToken');
       return res.status(401).json({ error: 'Sesión expirada, inicia sesión nuevamente' });
     }
 
@@ -110,10 +125,11 @@ const refreshToken = async (req, res) => {
       ipOrigen: req.ip || req.headers['x-forwarded-for']
     });
 
-    res.json({
-      accessToken: newAccessToken,
-      refreshToken: newPlainRefreshToken
-    });
+    // Actualizar Cookies
+    res.cookie('accessToken', newAccessToken, { ...cookieOptions, maxAge: 15 * 60 * 1000 });
+    res.cookie('refreshToken', newPlainRefreshToken, cookieOptions);
+
+    res.json({ message: 'Token refrescado correctamente' });
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: 'Error al refrescar el token' });
@@ -122,10 +138,14 @@ const refreshToken = async (req, res) => {
 
 const logout = async (req, res) => {
   try {
-    // Eliminar todos los refresh tokens del usuario autenticado
+    // Eliminar todos los refresh tokens del usuario autenticado en DB
     await RefreshToken.destroy({
       where: { usuarioId: req.usuario.id }
     });
+
+    // Limpiar Cookies
+    res.clearCookie('accessToken');
+    res.clearCookie('refreshToken');
 
     res.json({ message: 'Sesión cerrada correctamente' });
   } catch (error) {

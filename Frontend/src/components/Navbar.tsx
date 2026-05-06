@@ -19,7 +19,7 @@ const Navbar: React.FC = () => {
 
   const navItems = [
     { to: '/', icon: <LayoutDashboard size={20} />, label: 'Dashboard' },
-    { to: '/usuarios', icon: <UserCircle size={20} />, label: 'Clientes' },
+    { to: '/usuarios', icon: <UserCircle size={20} />, label: 'Usuarios' },
     { to: '/cuentas', icon: <Wallet size={20} />, label: 'Cuentas' },
     { to: '/prestamos', icon: <Landmark size={20} />, label: 'Préstamos' },
     { to: '/transacciones', icon: <History size={20} />, label: 'Historial' },
@@ -103,6 +103,34 @@ const Navbar: React.FC = () => {
               <span style={{ fontWeight: 600, fontSize: 'var(--text-body)' }}>{item.label}</span>
             </NavLink>
           ))}
+          
+          {/* Quick Action Button for Admin/Employee */}
+          {(user?.rol === 'admin' || user?.rol === 'empleado') && (
+            <div style={{ marginTop: 'var(--space-4)', padding: '0 var(--space-2)' }}>
+              <NavLink 
+                to="/usuarios?create=true" 
+                onClick={() => setIsOpen(false)}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 'var(--space-2)',
+                  padding: 'var(--space-3)',
+                  backgroundColor: 'rgba(201, 168, 76, 0.1)',
+                  border: '1px dashed var(--color-accent-500)',
+                  borderRadius: 'var(--radius-md)',
+                  color: 'var(--color-accent-500)',
+                  textDecoration: 'none',
+                  fontSize: 'var(--text-body-sm)',
+                  fontWeight: 600,
+                  transition: 'all 0.3s ease'
+                }}
+                className="quick-action-nav"
+              >
+                + Nuevo Usuario
+              </NavLink>
+            </div>
+          )}
         </div>
 
         <div style={{ borderTop: 'var(--border-subtle)', paddingTop: 'var(--space-6)' }}>

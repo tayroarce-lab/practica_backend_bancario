@@ -33,6 +33,11 @@ const Dashboard: React.FC = () => {
   });
   const [recentTxs, setRecentTxs] = useState<Transaccion[]>([]);
   const [chartData, setChartData] = useState<any[]>([]);
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   useEffect(() => {
     const fetchStats = async () => {
@@ -178,10 +183,10 @@ const Dashboard: React.FC = () => {
             subtitle="Análisis de movimientos en tiempo real"
           >
             <div style={{ height: '320px', width: '100%' }}>
-              {loading ? (
+              {loading || !isMounted ? (
                 <Skeleton height="100%" />
               ) : (
-                <ResponsiveContainer width="100%" height="100%">
+                <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0} debounce={100}>
                   <AreaChart data={chartData}>
                     <defs>
                       <linearGradient id="colorTotal" x1="0" y1="0" x2="0" y2="1">
@@ -257,7 +262,7 @@ const Dashboard: React.FC = () => {
                 variant="secondary"
                 fullWidth
               >
-                <UserPlus size={18} style={{ marginRight: 'var(--space-3)' }} /> Registrar Cliente
+                <UserPlus size={18} style={{ marginRight: 'var(--space-3)' }} /> Gestionar Usuarios
               </Button>
             )}
             {user?.rol === 'cliente' && (

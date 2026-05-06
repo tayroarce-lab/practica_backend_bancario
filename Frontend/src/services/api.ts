@@ -19,6 +19,7 @@ const api = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
+  withCredentials: true,
   timeout: 10000,
 });
 
@@ -37,12 +38,9 @@ const processQueue = (error: any, token: string | null = null) => {
   failedQueue = [];
 };
 
-// Interceptor para añadir el token JWT
+// No necesitamos interceptor de peticiones para el token ya que se envía por cookie automáticamente
+// pero dejamos el esqueleto por si se necesitan otros headers en el futuro
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('accessToken');
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
   return config;
 });
 
@@ -73,8 +71,7 @@ api.interceptors.response.use(
         return new Promise((resolve, reject) => {
           failedQueue.push({ resolve, reject });
         })
-        .then(token => {
-          originalRequest.headers.Authorization = `Bearer ${token}`;
+        .then(() => {
           return api(originalRequest);
         })
         .catch(err => Promise.reject(err));
@@ -83,33 +80,26 @@ api.interceptors.response.use(
       originalRequest._retry = true;
       isRefreshing = true;
 
-      const refreshToken = localStorage.getItem('refreshToken');
-      if (!refreshToken) {
-        // No hay refresh token, forzar logout
-        localStorage.clear();
-        window.location.href = '/login';
-        return Promise.reject(error);
-      }
-
       try {
-        const res = await axios.post(`${api.defaults.baseURL}/auth/refresh`, { refreshToken });
-        const { accessToken, refreshToken: newRefreshToken } = res.data;
-
-        localStorage.setItem('accessToken', accessToken);
-        localStorage.setItem('refreshToken', newRefreshToken);
-
-        api.defaults.headers.common['Authorization'] = `Bearer ${accessToken}`;
-        processQueue(null, accessToken);
+        // El refreshToken ahora se envía automáticamente por cookie
+        await axios.post(`${api.defaults.baseURL}/auth/refresh`, {}, { withCredentials: true });
         
+        processQueue(null);
         return api(originalRequest);
       } catch (refreshError) {
-        processQueue(refreshError, null);
-        localStorage.clear();
-        window.location.href = '/login';
+        processQueue(refreshError);
+        // IMPORTANTE: No usar window.location.href ya que causa recarga total y bucles
+        // El AuthContext o ProtectedRoute se encargarán de redirigir si el usuario es null
         return Promise.reject(refreshError);
       } finally {
         isRefreshing = false;
       }
+    }
+
+    // No mostrar toast de error para fallos de sesión o refresco (evita spam visual)
+    const isAuthPath = originalRequest.url?.includes('/auth/me') || originalRequest.url?.includes('/auth/refresh');
+    if (error.response?.status === 401 && isAuthPath) {
+        return Promise.reject(error);
     }
 
     const message = (error.response?.data as any)?.error || 'Error en la comunicación con el servidor.';
@@ -123,7 +113,7 @@ api.interceptors.response.use(
 
 export const authService = {
   login: (credentials: any) => api.post('/auth/login', credentials),
-  refresh: (refreshToken: string) => api.post('/auth/refresh', { refreshToken }),
+  refresh: () => api.post('/auth/refresh'),
   logout: () => api.post('/auth/logout'),
   getMe: () => api.get('/auth/me')
 };

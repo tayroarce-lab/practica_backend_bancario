@@ -13,14 +13,10 @@ const SessionMonitor: React.FC = () => {
   
   const handleExtend = async () => {
     try {
-      const refreshToken = localStorage.getItem('refreshToken');
-      if (refreshToken) {
-        const res = await authService.refresh(refreshToken);
-        localStorage.setItem('accessToken', res.data.accessToken);
-        localStorage.setItem('refreshToken', res.data.refreshToken);
-        setShowModal(false);
-        setTimeLeft(120);
-      }
+      // El refresh ahora se maneja automáticamente por cookies
+      await authService.refresh();
+      setShowModal(false);
+      setTimeLeft(120);
     } catch (error) {
       logout();
     }

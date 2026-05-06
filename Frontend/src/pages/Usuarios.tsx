@@ -1,28 +1,20 @@
 import React, { useEffect, useState } from 'react';
-import { motion } from 'framer-motion';
-import { UserPlus, Trash2, Edit2, Search, Mail, Phone, User as UserIcon, Lock } from 'lucide-react';
+import { UserPlus, Trash2, Edit2, Search, Mail, Phone, User as UserIcon } from 'lucide-react';
 import { usuarioService } from '../services/api';
-import type { Usuario, CreateUsuarioDTO } from '../types';
+import type { Usuario } from '../types';
 import Button from '../components/ui/Button';
 import Card from '../components/ui/Card';
-import Input from '../components/ui/Input';
 import Badge from '../components/ui/Badge';
 import Skeleton from '../components/ui/Skeleton';
 import { toast } from 'sonner';
+import Modal from '../components/ui/Modal';
+import UserForm from '../components/usuarios/UserForm';
 
 const UsuariosPage: React.FC = () => {
   const [usuarios, setUsuarios] = useState<Usuario[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [editingUser, setEditingUser] = useState<Usuario | null>(null);
-  const [formData, setFormData] = useState<CreateUsuarioDTO>({ 
-    nombre: '', 
-    apellido: '', 
-    email: '', 
-    telefono: '', 
-    password: '', 
-    dui: '' 
-  });
 
   const fetchUsuarios = async () => {
     try {
@@ -37,47 +29,26 @@ const UsuariosPage: React.FC = () => {
 
   useEffect(() => {
     fetchUsuarios();
+    
+    // Check if we should open the modal automatically (from sidebar quick action)
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('create') === 'true') {
+      setShowModal(true);
+      // Clean the URL without reloading
+      window.history.replaceState({}, '', window.location.pathname);
+    }
   }, []);
 
   const handleOpenCreate = () => {
     setEditingUser(null);
-    setFormData({ nombre: '', apellido: '', email: '', telefono: '', password: '', dui: '' });
     setShowModal(true);
   };
 
-  const handleOpenEdit = (user: Usuario) => {
-    setEditingUser(user);
-    setFormData({ 
-      nombre: user.nombre, 
-      apellido: user.apellido, 
-      email: user.email, 
-      telefono: user.telefono || '', 
-      dui: user.dui || '',
-      password: '' // No cargar password actual por seguridad
-    });
-    setShowModal(true);
+  const handleOpenEdit = () => {
+    toast.info('La edición de usuarios se implementará en la siguiente fase.');
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    try {
-      if (editingUser) {
-        // En update, solo enviar password si se escribió algo
-        const updateData = { ...formData };
-        if (!updateData.password) delete updateData.password;
-        
-        await usuarioService.actualizarUsuario(editingUser.id, updateData);
-        toast.success('Perfil de cliente actualizado con éxito');
-      } else {
-        await usuarioService.crearUsuario(formData);
-        toast.success('Nuevo cliente registrado en el sistema');
-      }
-      setShowModal(false);
-      fetchUsuarios();
-    } catch (error: any) {
-      // handled by interceptor
-    }
-  };
+
 
   const handleDelete = async (id: number) => {
     if (confirm('¿Estás seguro de eliminar este registro de cliente? Esta acción es irreversible.')) {
@@ -95,30 +66,35 @@ const UsuariosPage: React.FC = () => {
     <div className="fade-in">
       <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-10)' }}>
         <div>
-          <h1 className="h1" style={{ marginBottom: 'var(--space-2)' }}>Directorio de Clientes</h1>
-          <p className="text-secondary">Gestión de perfiles, credenciales y datos de contacto de alto patrimonio.</p>
+          <h1 className="h1" style={{ marginBottom: 'var(--space-2)' }}>Gestión de Usuarios</h1>
+          <p className="text-secondary">Control de acceso y perfiles para administradores, empleados y clientes.</p>
         </div>
         <Button onClick={handleOpenCreate}>
-          <UserPlus size={18} style={{ marginRight: 'var(--space-2)' }} /> Registrar Cliente
+          <UserPlus size={18} style={{ marginRight: 'var(--space-2)' }} /> Registrar Usuario
         </Button>
       </header>
 
-      <Card title="Cartera de Clientes" subtitle="Listado centralizado de usuarios del sistema">
-        <div style={{ position: 'relative', marginBottom: 'var(--space-6)', maxWidth: '400px' }}>
-          <Search size={18} style={{ position: 'absolute', left: 'var(--space-4)', top: '50%', transform: 'translateY(-50%)', color: 'var(--color-text-muted)' }} />
-          <input 
-            type="text" 
-            placeholder="Buscar por nombre o email..." 
-            style={{ 
-              width: '100%', 
-              padding: 'var(--space-3) var(--space-4) var(--space-3) var(--space-10)',
-              backgroundColor: 'var(--color-primary-800)',
-              border: 'var(--border-subtle)',
-              borderRadius: 'var(--radius-md)',
-              color: 'white',
-              outline: 'none'
-            }} 
-          />
+      <Card title="Directorio de Usuarios" subtitle="Listado centralizado de personal y clientes">
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-6)', gap: 'var(--space-4)', flexWrap: 'wrap' }}>
+          <div style={{ position: 'relative', flex: 1, maxWidth: '400px' }}>
+            <Search size={18} style={{ position: 'absolute', left: 'var(--space-4)', top: '50%', transform: 'translateY(-50%)', color: 'var(--color-text-muted)' }} />
+            <input 
+              type="text" 
+              placeholder="Buscar por nombre o email..." 
+              style={{ 
+                width: '100%', 
+                padding: 'var(--space-3) var(--space-4) var(--space-3) var(--space-10)',
+                backgroundColor: 'var(--color-primary-800)',
+                border: 'var(--border-subtle)',
+                borderRadius: 'var(--radius-md)',
+                color: 'white',
+                outline: 'none'
+              }} 
+            />
+          </div>
+          <Button onClick={handleOpenCreate}>
+            <UserPlus size={18} style={{ marginRight: 'var(--space-2)' }} /> Registrar Usuario
+          </Button>
         </div>
 
         <div className="table-container">
@@ -178,7 +154,7 @@ const UsuariosPage: React.FC = () => {
                   </td>
                   <td style={{ padding: 'var(--space-4)', borderRadius: '0 var(--radius-md) var(--radius-md) 0', textAlign: 'right' }}>
                     <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 'var(--space-2)' }}>
-                      <Button variant="ghost" size="sm" onClick={() => handleOpenEdit(user)} style={{ padding: 'var(--space-2)' }}>
+                      <Button variant="ghost" size="sm" onClick={handleOpenEdit} style={{ padding: 'var(--space-2)' }}>
                         <Edit2 size={16} />
                       </Button>
                       <Button 
@@ -198,74 +174,19 @@ const UsuariosPage: React.FC = () => {
         </div>
       </Card>
 
-      {showModal && (
-        <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.85)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, backdropFilter: 'blur(8px)' }}>
-          <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} style={{ width: '100%', maxWidth: '520px' }}>
-            <Card 
-              title={editingUser ? "Edición de Perfil" : "Registro de Nuevo Cliente"} 
-              subtitle={editingUser ? `Modificando registro de ${editingUser.nombre}` : "Ingrese los datos de identidad y contacto"}
-            >
-              <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-4)' }}>
-                  <Input 
-                    label="Nombre"
-                    required
-                    icon={<UserIcon size={16} />}
-                    value={formData.nombre}
-                    onChange={(e) => setFormData({...formData, nombre: e.target.value})}
-                  />
-                  <Input 
-                    label="Apellido"
-                    required
-                    icon={<UserIcon size={16} />}
-                    value={formData.apellido}
-                    onChange={(e) => setFormData({...formData, apellido: e.target.value})}
-                  />
-                </div>
-                
-                <Input 
-                  label="Email Corporativo / Personal"
-                  type="email"
-                  required
-                  icon={<Mail size={16} />}
-                  value={formData.email}
-                  onChange={(e) => setFormData({...formData, email: e.target.value})}
-                />
-
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-4)' }}>
-                  <Input 
-                    label="Teléfono"
-                    icon={<Phone size={16} />}
-                    value={formData.telefono}
-                    onChange={(e) => setFormData({...formData, telefono: e.target.value})}
-                  />
-                  <Input 
-                    label="Documento (DUI/ID)"
-                    required
-                    value={formData.dui}
-                    onChange={(e) => setFormData({...formData, dui: e.target.value})}
-                  />
-                </div>
-
-                <Input 
-                  label={editingUser ? "Nueva Contraseña (dejar vacío para mantener)" : "Contraseña de Acceso"}
-                  type="password"
-                  required={!editingUser}
-                  minLength={8}
-                  icon={<Lock size={16} />}
-                  value={formData.password}
-                  onChange={(e) => setFormData({...formData, password: e.target.value})}
-                />
-
-                <div style={{ display: 'flex', gap: 'var(--space-4)', marginTop: 'var(--space-4)' }}>
-                  <Button type="button" variant="ghost" fullWidth onClick={() => setShowModal(false)}>Cancelar</Button>
-                  <Button type="submit" fullWidth>{editingUser ? 'Guardar Cambios' : 'Finalizar Registro'}</Button>
-                </div>
-              </form>
-            </Card>
-          </motion.div>
-        </div>
-      )}
+      <Modal
+        isOpen={showModal}
+        onClose={() => setShowModal(false)}
+        title={editingUser ? "Editar Usuario" : "Registrar Nuevo Usuario"}
+      >
+        <UserForm 
+          onSuccess={() => {
+            setShowModal(false);
+            fetchUsuarios();
+          }}
+          onCancel={() => setShowModal(false)}
+        />
+      </Modal>
 
       <style>{`
         .row-hover:hover {

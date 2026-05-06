@@ -3,7 +3,13 @@ const { Usuario, Cuenta } = require('../models');
 // Crear usuario
 const crearUsuario = async (req, res) => {
   try {
-    const { nombre, apellido, email, password, telefono, dui, fechaNacimiento } = req.body;
+    const { nombre, apellido, email, password, telefono, dui, fechaNacimiento, rol } = req.body;
+
+    // REGLA DE NEGOCIO: Empleado solo puede crear clientes
+    // Un admin puede crear cualquier rol (admin, empleado, cliente)
+    if (req.usuario.rol === 'empleado' && rol && rol !== 'cliente') {
+      return res.status(403).json({ error: 'Un empleado solo puede registrar usuarios con el rol "cliente"' });
+    }
 
     // Verificar email único
     const existeEmail = await Usuario.findOne({ where: { email } });
@@ -21,7 +27,7 @@ const crearUsuario = async (req, res) => {
 
     // Crear el usuario. El hook de bcrypt encriptará la contraseña.
     const usuario = await Usuario.create({
-      nombre, apellido, email, password, telefono, dui, fechaNacimiento
+      nombre, apellido, email, password, telefono, dui, fechaNacimiento, rol: rol || 'cliente'
     });
 
     // Remover la contraseña de la respuesta

@@ -20,7 +20,7 @@ const LoginPage: React.FC = () => {
     setIsLoading(true);
     try {
       const res = await authService.login({ email, password });
-      login(res.data.accessToken, res.data.refreshToken, res.data.usuario);
+      login(res.data.usuario);
       toast.success('Acceso autorizado. Bienvenido.');
       navigate('/');
     } catch (error) {

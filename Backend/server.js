@@ -7,7 +7,7 @@ const { Op } = require('sequelize');
 const socketUtils = require('./utils/socket');
 
 // VALIDACIÓN DE VARIABLES DE ENTORNO CRÍTICAS
-const requiredEnvVars = ['JWT_SECRET', 'DB_HOST', 'DB_USER', 'DB_PASS', 'DB_NAME'];
+const requiredEnvVars = ['JWT_SECRET', 'DB_HOST', 'DB_USER', 'DB_PASSWORD', 'DB_NAME'];
 const missing = requiredEnvVars.filter(v => !process.env[v]);
 if (missing.length > 0) {
   console.error(`[FATAL] Variables de entorno faltantes: ${missing.join(', ')}`);

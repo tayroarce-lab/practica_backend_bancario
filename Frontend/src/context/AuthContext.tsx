@@ -5,7 +5,7 @@ import { authService } from '../services/api';
 interface AuthContextType {
   user: Usuario | null;
   loading: boolean;
-  login: (accessToken: string, refreshToken: string, user: Usuario) => void;
+  login: (user: Usuario) => void;
   logout: () => void;
 }
 
@@ -17,42 +17,34 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   useEffect(() => {
     const initAuth = async () => {
-      const accessToken = localStorage.getItem('accessToken');
-      const refreshToken = localStorage.getItem('refreshToken');
-      const savedUser = localStorage.getItem('user');
-      
-      if (accessToken && refreshToken && savedUser) {
-        try {
-          // Validar el token con el servidor al recargar
-          const res = await authService.getMe();
-          setUser(res.data);
-          localStorage.setItem('user', JSON.stringify(res.data));
-        } catch (error) {
-          console.error('Sesión inválida al recargar:', error);
-          localStorage.removeItem('accessToken');
-          localStorage.removeItem('refreshToken');
-          localStorage.removeItem('user');
-          setUser(null);
-        }
+      try {
+        // Al usar cookies, intentamos obtener el usuario actual directamente
+        // Si hay cookies válidas, esto devolverá el usuario
+        const res = await authService.getMe();
+        setUser(res.data);
+      } catch (error) {
+        // Si falla (p.ej. 401), el usuario no está autenticado
+        setUser(null);
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     };
     initAuth();
   }, []);
 
-  const login = (accessToken: string, refreshToken: string, userData: Usuario) => {
-    localStorage.setItem('accessToken', accessToken);
-    localStorage.setItem('refreshToken', refreshToken);
-    localStorage.setItem('user', JSON.stringify(userData));
+  const login = (userData: Usuario) => {
     setUser(userData);
   };
 
-  const logout = () => {
-    localStorage.removeItem('accessToken');
-    localStorage.removeItem('refreshToken');
-    localStorage.removeItem('user');
-    setUser(null);
-    window.location.href = '/login';
+  const logout = async () => {
+    try {
+      await authService.logout();
+    } catch (error) {
+      console.error('Error durante el logout:', error);
+    } finally {
+      setUser(null);
+      window.location.href = '/login';
+    }
   };
 
   return (

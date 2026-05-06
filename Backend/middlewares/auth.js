@@ -1,21 +1,27 @@
 const jwt = require('jsonwebtoken');
 
 const authMiddleware = (req, res, next) => {
-  const authHeader = req.headers.authorization;
+  let token = null;
 
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return res.status(401).json({ error: 'Acceso denegado. No hay token.' });
+  // 1. Intentar obtener de cookies (Prioridad)
+  if (req.cookies && req.cookies.accessToken) {
+    token = req.cookies.accessToken;
+  } 
+  // 2. Intentar obtener de header Authorization (Fallback para herramientas externas)
+  else if (req.headers.authorization && req.headers.authorization.startsWith('Bearer ')) {
+    token = req.headers.authorization.split(' ')[1];
   }
 
-  const token = authHeader.split(' ')[1];
+  if (!token) {
+    return res.status(401).json({ error: 'Acceso denegado. No hay sesión activa.' });
+  }
 
   try {
-    // El secret debe venir exclusivamente de process.env.JWT_SECRET
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     req.usuario = decoded;
     next();
   } catch (error) {
-    res.status(401).json({ error: 'Token inválido o expirado' });
+    res.status(401).json({ error: 'Sesión expirada o inválida' });
   }
 };
 

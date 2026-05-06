@@ -1,9 +1,10 @@
-import React from 'react';
+import { Loader2 } from 'lucide-react';
 
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: 'primary' | 'secondary' | 'tertiary' | 'danger' | 'ghost';
   size?: 'sm' | 'md' | 'lg';
   fullWidth?: boolean;
+  loading?: boolean;
 }
 
 const Button: React.FC<ButtonProps> = ({
@@ -11,32 +12,17 @@ const Button: React.FC<ButtonProps> = ({
   variant = 'primary',
   size = 'md',
   fullWidth = false,
+  loading = false,
   className = '',
+  disabled,
   ...props
 }) => {
-  const baseStyles = 'inline-flex items-center justify-center rounded-md font-medium transition-all duration-300 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed';
-  
-  const variants = {
-    primary: 'bg-[#C9A84C] text-[#0A1628] hover:bg-[#A8820D] shadow-[0_4px_16px_rgba(201,168,76,0.25)]',
-    secondary: 'bg-transparent text-[#C9A84C] border border-[#C9A84C] hover:bg-[rgba(201,168,76,0.08)]',
-    tertiary: 'bg-transparent text-[#2563B0] hover:bg-[rgba(37,99,176,0.08)]',
-    danger: 'bg-[#F04438] text-white hover:bg-[#9B1C1C]',
-    ghost: 'bg-transparent text-[#7A92AB] hover:bg-[rgba(122,146,171,0.08)]'
-  };
-
-  const sizes = {
-    sm: 'px-3 py-1.5 text-xs',
-    md: 'px-4 py-2.5 text-sm',
-    lg: 'px-6 py-3.5 text-base'
-  };
-
   const widthStyle = fullWidth ? 'w-full' : '';
+  const isDisabled = disabled || loading;
 
-  // Manual CSS since we are not using Tailwind by default but the user rules said "Use Vanilla CSS... Avoid Tailwind unless requested"
-  // Wait, the previous code had some tailwind-like classes but I should use standard CSS or my tokens.
-  
   return (
     <button
+      disabled={isDisabled}
       className={`btn-${variant} btn-${size} ${widthStyle} ${className}`}
       style={{
         display: 'inline-flex',
@@ -45,12 +31,13 @@ const Button: React.FC<ButtonProps> = ({
         borderRadius: 'var(--radius-md)',
         fontWeight: '500',
         transition: 'all 0.3s ease',
-        cursor: props.disabled ? 'not-allowed' : 'pointer',
-        opacity: props.disabled ? 0.5 : 1,
+        cursor: isDisabled ? 'not-allowed' : 'pointer',
+        opacity: isDisabled ? 0.5 : 1,
         width: fullWidth ? '100%' : 'auto',
         border: 'none',
         outline: 'none',
         fontFamily: 'inherit',
+        gap: 'var(--space-2)',
         ...(variant === 'primary' && {
           backgroundColor: 'var(--color-accent-500)',
           color: 'var(--color-primary-900)',
@@ -76,8 +63,16 @@ const Button: React.FC<ButtonProps> = ({
       }}
       {...props}
     >
+      {loading && <Loader2 size={18} className="animate-spin" />}
       {children}
       <style>{`
+        @keyframes spin {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+        .animate-spin {
+          animation: spin 1s linear infinite;
+        }
         .btn-primary:hover:not(:disabled) { background-color: var(--color-accent-700) !important; transform: translateY(-2px); }
         .btn-secondary:hover:not(:disabled) { background-color: rgba(201, 168, 76, 0.08) !important; transform: translateY(-2px); }
         .btn-tertiary:hover:not(:disabled) { background-color: rgba(37, 99, 176, 0.08) !important; }
