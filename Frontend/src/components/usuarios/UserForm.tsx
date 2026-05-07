@@ -1,21 +1,24 @@
-import React, { useState } from 'react';
-import { UserPlus, Mail, Lock, UserCheck, Phone, CreditCard, Calendar } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { UserPlus, Mail, Lock, UserCheck, Phone, CreditCard, Calendar, Save } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { usuarioService } from '../../services/api';
 import { toast } from 'sonner';
 import Input from '../ui/Input';
 import Button from '../ui/Button';
 
-import type { CreateUsuarioDTO } from '../../types';
+import type { CreateUsuarioDTO, Usuario } from '../../types';
 
 interface UserFormProps {
   onSuccess: () => void;
   onCancel: () => void;
+  editingUser?: Usuario | null;
 }
 
-const UserForm: React.FC<UserFormProps> = ({ onSuccess, onCancel }) => {
+const UserForm: React.FC<UserFormProps> = ({ onSuccess, onCancel, editingUser }) => {
   const { user: currentUser } = useAuth();
   const [loading, setLoading] = useState(false);
+  const isEditing = !!editingUser;
+
   const [formData, setFormData] = useState<CreateUsuarioDTO>({
     nombre: '',
     apellido: '',
@@ -27,6 +30,22 @@ const UserForm: React.FC<UserFormProps> = ({ onSuccess, onCancel }) => {
     fechaNacimiento: ''
   });
 
+  // Pre-rellenar el formulario cuando se edita un usuario
+  useEffect(() => {
+    if (editingUser) {
+      setFormData({
+        nombre: editingUser.nombre || '',
+        apellido: editingUser.apellido || '',
+        email: editingUser.email || '',
+        password: '', // No rellenar la contraseña al editar
+        rol: editingUser.rol || 'cliente',
+        telefono: editingUser.telefono || '',
+        dui: editingUser.dui || '',
+        fechaNacimiento: editingUser.fechaNacimiento || ''
+      });
+    }
+  }, [editingUser]);
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
@@ -37,21 +56,32 @@ const UserForm: React.FC<UserFormProps> = ({ onSuccess, onCancel }) => {
     setLoading(true);
 
     try {
-      await usuarioService.crearUsuario(formData);
-      toast.success('Usuario registrado correctamente');
+      if (isEditing && editingUser) {
+        // Editar: no enviar password si está vacío
+        const updateData: Partial<CreateUsuarioDTO> = { ...formData };
+        if (!updateData.password) {
+          delete updateData.password;
+        }
+        await usuarioService.actualizarUsuario(editingUser.id, updateData);
+        toast.success('Usuario actualizado correctamente');
+      } else {
+        // Crear
+        await usuarioService.crearUsuario(formData);
+        toast.success('Usuario registrado correctamente');
+      }
       onSuccess();
     } catch (error: any) {
       console.error(error);
-      const msg = error.response?.data?.error || 'Error al registrar el usuario';
+      const msg = error.response?.data?.error || (isEditing ? 'Error al actualizar el usuario' : 'Error al registrar el usuario');
       toast.error(msg);
     } finally {
       setLoading(false);
     }
   };
 
-  // Determinar roles disponibles según el rol del que crea
-  const availableRoles = currentUser?.rol === 'admin' 
-    ? ['admin', 'empleado', 'cliente'] 
+  // Roles disponibles según el rol del usuario que gestiona
+  const availableRoles = currentUser?.rol === 'admin'
+    ? ['admin', 'empleado', 'cliente']
     : ['cliente'];
 
   return (
@@ -83,17 +113,18 @@ const UserForm: React.FC<UserFormProps> = ({ onSuccess, onCancel }) => {
         value={formData.email}
         onChange={handleChange}
         required
+        disabled={isEditing} // Email no editable
         icon={<Mail size={18} />}
         placeholder="juan.perez@ejemplo.com"
       />
 
       <Input
-        label="Contraseña"
+        label={isEditing ? 'Nueva Contraseña (dejar vacío para no cambiar)' : 'Contraseña'}
         name="password"
         type="password"
         value={formData.password}
         onChange={handleChange}
-        required
+        required={!isEditing}
         icon={<Lock size={18} />}
         placeholder="••••••••"
       />
@@ -127,10 +158,10 @@ const UserForm: React.FC<UserFormProps> = ({ onSuccess, onCancel }) => {
       />
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-2)' }}>
-        <label style={{ 
-          color: 'var(--color-text-secondary)', 
-          fontSize: 'var(--text-body-sm)', 
-          fontWeight: 500 
+        <label style={{
+          color: 'var(--color-text-secondary)',
+          fontSize: 'var(--text-body-sm)',
+          fontWeight: 500
         }}>
           Rol del Usuario
         </label>
@@ -172,28 +203,31 @@ const UserForm: React.FC<UserFormProps> = ({ onSuccess, onCancel }) => {
         </div>
       </div>
 
-      <div style={{ 
-        display: 'flex', 
-        gap: 'var(--space-3)', 
+      <div style={{
+        display: 'flex',
+        gap: 'var(--space-3)',
         marginTop: 'var(--space-4)',
         paddingTop: 'var(--space-4)',
-        borderTop: 'var(--border-subtle)' 
+        borderTop: 'var(--border-subtle)'
       }}>
-        <Button 
-          type="button" 
-          variant="ghost" 
-          onClick={onCancel} 
+        <Button
+          type="button"
+          variant="ghost"
+          onClick={onCancel}
           fullWidth
           disabled={loading}
         >
           Cancelar
         </Button>
-        <Button 
-          type="submit" 
-          fullWidth 
+        <Button
+          type="submit"
+          fullWidth
           loading={loading}
         >
-          Registrar Usuario
+          {isEditing
+            ? <><Save size={16} style={{ marginRight: 'var(--space-2)' }} />Guardar Cambios</>
+            : 'Registrar Usuario'
+          }
         </Button>
       </div>
     </form>

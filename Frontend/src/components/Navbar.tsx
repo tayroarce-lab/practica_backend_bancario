@@ -18,13 +18,15 @@ const Navbar: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
   const navigate = useNavigate();
 
-  const navItems = [
-    { to: '/', icon: <LayoutDashboard size={20} />, label: 'Dashboard' },
-    { to: '/usuarios', icon: <UserCircle size={20} />, label: 'Usuarios' },
-    { to: '/cuentas', icon: <Wallet size={20} />, label: 'Cuentas' },
-    { to: '/prestamos', icon: <Landmark size={20} />, label: 'Préstamos' },
-    { to: '/transacciones', icon: <History size={20} />, label: 'Historial' },
+  const allNavItems = [
+    { to: '/', icon: <LayoutDashboard size={20} />, label: 'Dashboard', roles: ['admin', 'empleado', 'cliente'] },
+    { to: '/usuarios', icon: <UserCircle size={20} />, label: 'Usuarios', roles: ['admin', 'empleado'] },
+    { to: '/cuentas', icon: <Wallet size={20} />, label: 'Cuentas', roles: ['admin', 'empleado', 'cliente'] },
+    { to: '/prestamos', icon: <Landmark size={20} />, label: 'Préstamos', roles: ['admin', 'empleado', 'cliente'] },
+    { to: '/transacciones', icon: <History size={20} />, label: 'Historial', roles: ['admin', 'empleado', 'cliente'] },
   ];
+
+  const navItems = allNavItems.filter(item => item.roles.includes(user?.rol || 'cliente'));
 
   return (
     <>
@@ -135,7 +137,11 @@ const Navbar: React.FC = () => {
         </div>
 
         <div style={{ borderTop: 'var(--border-subtle)', paddingTop: 'var(--space-6)' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-4)', marginBottom: 'var(--space-6)', padding: '0 var(--space-2)' }}>
+          <div
+            onClick={() => { navigate('/perfil'); setIsOpen(false); }}
+            style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-4)', marginBottom: 'var(--space-6)', padding: '0 var(--space-2)', cursor: 'pointer', borderRadius: 'var(--radius-md)', transition: 'background-color 0.2s' }}
+            title="Ver mi perfil"
+          >
             <div style={{ 
               width: '44px', 
               height: '44px', 
@@ -146,7 +152,8 @@ const Navbar: React.FC = () => {
               alignItems: 'center', 
               justifyContent: 'center', 
               fontWeight: 700,
-              color: 'var(--color-accent-500)'
+              color: 'var(--color-accent-500)',
+              flexShrink: 0
             }}>
               {user?.nombre?.[0]}{user?.apellido?.[0]}
             </div>

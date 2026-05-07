@@ -17,6 +17,7 @@ const cuentaRoutes = require('./routes/cuentaRoutes');
 const transaccionRoutes = require('./routes/transaccionRoutes');
 const prestamoRoutes = require('./routes/prestamoRoutes');
 const authRoutes = require('./routes/authRoutes');
+const dashboardRoutes = require('./routes/dashboardRoutes');
 const authMiddleware = require('./middlewares/auth');
 
 const app = express();
@@ -48,6 +49,16 @@ const limiter = rateLimit({
 });
 app.use('/api/', limiter);
 
+// Rate Limiting estricto para autenticación (10 intentos / 15 min)
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: process.env.NODE_ENV === 'development' ? 100 : 10,
+  message: { error: 'Demasiados intentos de login. Por favor, espere 15 minutos.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+app.use('/api/auth/login', authLimiter);
+
 // Mensaje de bienvenida en GET /
 app.get('/', (req, res) => {
   res.json({ message: 'Bienvenido a la API del Sistema Bancario' });
@@ -55,6 +66,7 @@ app.get('/', (req, res) => {
 
 // Rutas de la API
 app.use('/api/auth', authRoutes);
+app.use('/api/dashboard', authMiddleware, dashboardRoutes);
 app.use('/api/usuarios', authMiddleware, usuarioRoutes);
 app.use('/api/cuentas', authMiddleware, cuentaRoutes);
 app.use('/api/transacciones', authMiddleware, transaccionRoutes);

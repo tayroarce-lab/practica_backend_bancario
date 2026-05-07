@@ -42,7 +42,15 @@ const crearCuenta = async (req, res) => {
 // Obtener todas las cuentas
 const obtenerCuentas = async (req, res) => {
   try {
+    let whereClause = {};
+    
+    // RESTRICCIÓN: Cliente solo ve sus propias cuentas
+    if (req.usuario.rol === 'cliente') {
+      whereClause.usuarioId = req.usuario.id;
+    }
+
     const cuentas = await Cuenta.findAll({
+      where: whereClause,
       include: [
         { model: Usuario, as: 'usuario', attributes: ['id', 'nombre', 'apellido', 'email'] },
         { model: TipoCuenta, as: 'tipoCuenta', attributes: ['id', 'nombre'] }

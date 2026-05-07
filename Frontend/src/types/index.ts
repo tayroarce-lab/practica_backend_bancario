@@ -83,3 +83,24 @@ export interface CreatePrestamoDTO {
   plazoMeses: number;
   tasaInteres: number;
 }
+
+export interface DashboardStats {
+  rol: 'admin' | 'empleado' | 'cliente';
+  stats: {
+    // Admin/Empleado
+    totalUsuarios?: number;
+    totalCuentas?: number;
+    saldoTotal?: number;
+    transaccionesHoy?: number;
+    prestamosPendientes?: number;
+    // Cliente
+    miSaldoTotal?: number;
+    prestamosActivos?: number;
+  };
+  recentTxs: Transaccion[];
+  // Cliente only
+  misCuentas?: Cuenta[];
+  misPrestamos?: Prestamo[];
+}
+
+export type DashboardChart = Array<{ name: string; total: number }>;

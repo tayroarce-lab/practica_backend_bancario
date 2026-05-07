@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Plus, CheckCircle, XCircle, Clock, Landmark, Calculator } from 'lucide-react';
 import { prestamoService, usuarioService, cuentaService } from '../services/api';
+import { useAuth } from '../context/AuthContext';
 import type { Prestamo, Usuario, Cuenta } from '../types';
 import Button from '../components/ui/Button';
 import Card from '../components/ui/Card';
@@ -15,8 +16,11 @@ const PrestamosPage: React.FC = () => {
   const [usuarios, setUsuarios] = useState<Usuario[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
+  const { user } = useAuth();
+  const isClient = user?.rol === 'cliente';
+
   const [newPrestamo, setNewPrestamo] = useState({ 
-    usuarioId: '', 
+    usuarioId: user?.id?.toString() || '', 
     monto: '', 
     plazoMeses: '12', 
     tasaInteres: '5.5' 
@@ -28,12 +32,14 @@ const PrestamosPage: React.FC = () => {
 
   const fetchData = async () => {
     try {
-      const [resPrestamos, resUsuarios] = await Promise.all([
-        prestamoService.getPrestamos(),
-        usuarioService.getUsuarios()
-      ]);
-      setPrestamos(resPrestamos.data);
-      setUsuarios(resUsuarios.data);
+      const prestamoRes = await prestamoService.getPrestamos();
+      setPrestamos(prestamoRes.data);
+
+      // Solo admin/empleado necesitan la lista de usuarios (para el formulario de solicitud)
+      if (!isClient) {
+        const usuariosRes = await usuarioService.getUsuarios();
+        setUsuarios(usuariosRes.data);
+      }
     } catch (error) {
       console.error('Error fetching loans:', error);
     } finally {
@@ -106,10 +112,13 @@ const PrestamosPage: React.FC = () => {
     <div className="fade-in">
       <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-10)' }}>
         <div>
-          <h1 className="h1" style={{ marginBottom: 'var(--space-2)' }}>Líneas de Crédito</h1>
-          <p className="text-secondary">Gestión de capital circulante y financiamiento institucional.</p>
+          <h1 className="h1" style={{ marginBottom: 'var(--space-2)' }}>{isClient ? 'Mis Créditos' : 'Líneas de Crédito'}</h1>
+          <p className="text-secondary">{isClient ? 'Seguimiento de sus financiamientos y estados de cuenta.' : 'Gestión de capital circulante y financiamiento institucional.'}</p>
         </div>
-        <Button onClick={() => setShowModal(true)}>
+        <Button onClick={() => {
+          setNewPrestamo(prev => ({ ...prev, usuarioId: user?.id?.toString() || '' }));
+          setShowModal(true);
+        }}>
           <Plus size={18} style={{ marginRight: 'var(--space-2)' }} /> Solicitar Financiamiento
         </Button>
       </header>
@@ -119,11 +128,11 @@ const PrestamosPage: React.FC = () => {
           <table style={{ width: '100%', borderCollapse: 'separate', borderSpacing: '0 8px' }}>
             <thead>
               <tr>
-                <th style={{ padding: 'var(--space-4)', color: 'var(--color-text-muted)', fontWeight: 600, fontSize: 'var(--text-label)', textTransform: 'uppercase', textAlign: 'left' }}>Cliente Solicitante</th>
+                {!isClient && <th style={{ padding: 'var(--space-4)', color: 'var(--color-text-muted)', fontWeight: 600, fontSize: 'var(--text-label)', textTransform: 'uppercase', textAlign: 'left' }}>Cliente Solicitante</th>}
                 <th style={{ padding: 'var(--space-4)', color: 'var(--color-text-muted)', fontWeight: 600, fontSize: 'var(--text-label)', textTransform: 'uppercase', textAlign: 'left' }}>Capital Solicitado</th>
                 <th style={{ padding: 'var(--space-4)', color: 'var(--color-text-muted)', fontWeight: 600, fontSize: 'var(--text-label)', textTransform: 'uppercase', textAlign: 'left' }}>Condiciones</th>
                 <th style={{ padding: 'var(--space-4)', color: 'var(--color-text-muted)', fontWeight: 600, fontSize: 'var(--text-label)', textTransform: 'uppercase', textAlign: 'left' }}>Estado de Riesgo</th>
-                <th style={{ padding: 'var(--space-4)', color: 'var(--color-text-muted)', fontWeight: 600, fontSize: 'var(--text-label)', textTransform: 'uppercase', textAlign: 'right' }}>Acciones Administrativas</th>
+                {!isClient && <th style={{ padding: 'var(--space-4)', color: 'var(--color-text-muted)', fontWeight: 600, fontSize: 'var(--text-label)', textTransform: 'uppercase', textAlign: 'right' }}>Acciones Administrativas</th>}
               </tr>
             </thead>
             <tbody>
@@ -137,11 +146,13 @@ const PrestamosPage: React.FC = () => {
                 <tr><td colSpan={5} style={{ textAlign: 'center', padding: 'var(--space-10)', color: 'var(--color-text-muted)' }}>No se han registrado solicitudes de crédito activas.</td></tr>
               ) : prestamos.map((p) => (
                 <tr key={p.id} style={{ backgroundColor: 'rgba(255,255,255,0.02)' }} className="row-hover">
-                  <td style={{ padding: 'var(--space-4)', borderRadius: 'var(--radius-md) 0 0 var(--radius-md)' }}>
-                    <div style={{ fontWeight: 600, color: 'white' }}>{p.usuario?.nombre} {p.usuario?.apellido}</div>
-                    <div className="font-mono" style={{ fontSize: '10px', color: 'var(--color-accent-500)', marginTop: '2px' }}>ID-REF: {p.id.toString().padStart(6, '0')}</div>
-                  </td>
-                  <td style={{ padding: 'var(--space-4)' }}>
+                  {!isClient && (
+                    <td style={{ padding: 'var(--space-4)', borderRadius: 'var(--radius-md) 0 0 var(--radius-md)' }}>
+                      <div style={{ fontWeight: 600, color: 'white' }}>{p.usuario?.nombre} {p.usuario?.apellido}</div>
+                      <div className="font-mono" style={{ fontSize: '10px', color: 'var(--color-accent-500)', marginTop: '2px' }}>ID-REF: {p.id.toString().padStart(6, '0')}</div>
+                    </td>
+                  )}
+                  <td style={{ padding: 'var(--space-4)', borderRadius: isClient ? 'var(--radius-md) 0 0 var(--radius-md)' : '0' }}>
                     <span className="text-amount" style={{ color: 'white' }}>${Number(p.monto).toLocaleString()}</span>
                   </td>
                   <td style={{ padding: 'var(--space-4)' }}>
@@ -153,30 +164,32 @@ const PrestamosPage: React.FC = () => {
                   <td style={{ padding: 'var(--space-4)' }}>
                     <Badge status={p.estado} />
                   </td>
-                  <td style={{ padding: 'var(--space-4)', borderRadius: '0 var(--radius-md) var(--radius-md) 0', textAlign: 'right' }}>
-                    {p.estado === 'pendiente' ? (
-                      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 'var(--space-3)' }}>
-                        <Button 
-                          variant="secondary" 
-                          size="sm"
-                          onClick={() => openApproval(p)}
-                          style={{ border: '1px solid var(--color-success-500)', color: 'var(--color-success-500)' }}
-                        >
-                          <CheckCircle size={14} style={{ marginRight: '6px' }} /> Aprobar
-                        </Button>
-                        <Button 
-                          variant="ghost" 
-                          size="sm"
-                          onClick={() => handleStatus(p.id)}
-                          style={{ color: 'var(--color-error-500)' }}
-                        >
-                          <XCircle size={14} style={{ marginRight: '6px' }} /> Rechazar
-                        </Button>
-                      </div>
-                    ) : (
-                      <span style={{ color: 'var(--color-text-muted)', fontSize: 'var(--text-caption)', textTransform: 'uppercase', letterSpacing: '1px' }}>Procesado</span>
-                    )}
-                  </td>
+                  {!isClient && (
+                    <td style={{ padding: 'var(--space-4)', borderRadius: '0 var(--radius-md) var(--radius-md) 0', textAlign: 'right' }}>
+                      {p.estado === 'pendiente' ? (
+                        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 'var(--space-3)' }}>
+                          <Button 
+                            variant="secondary" 
+                            size="sm"
+                            onClick={() => openApproval(p)}
+                            style={{ border: '1px solid var(--color-success-500)', color: 'var(--color-success-500)' }}
+                          >
+                            <CheckCircle size={14} style={{ marginRight: '6px' }} /> Aprobar
+                          </Button>
+                          <Button 
+                            variant="ghost" 
+                            size="sm"
+                            onClick={() => handleStatus(p.id)}
+                            style={{ color: 'var(--color-error-500)' }}
+                          >
+                            <XCircle size={14} style={{ marginRight: '6px' }} /> Rechazar
+                          </Button>
+                        </div>
+                      ) : (
+                        <span style={{ color: 'var(--color-text-muted)', fontSize: 'var(--text-caption)', textTransform: 'uppercase', letterSpacing: '1px' }}>Procesado</span>
+                      )}
+                    </td>
+                  )}
                 </tr>
               ))}
             </tbody>
@@ -189,26 +202,28 @@ const PrestamosPage: React.FC = () => {
           <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} style={{ width: '100%', maxWidth: '520px' }}>
             <Card title="Nueva Solicitud de Crédito" subtitle="Análisis de viabilidad y asignación de fondos">
               <form onSubmit={handleRequest} style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-5)' }}>
-                <div>
-                  <label style={{ display: 'block', marginBottom: 'var(--space-2)', fontSize: 'var(--text-label)', color: 'var(--color-text-secondary)', fontWeight: 600 }}>Titular del Crédito</label>
-                  <select 
-                    required
-                    style={{ 
-                      width: '100%', 
-                      backgroundColor: 'var(--color-primary-800)', 
-                      border: 'var(--border-subtle)', 
-                      borderRadius: 'var(--radius-md)', 
-                      padding: 'var(--space-3) var(--space-4)',
-                      color: 'white',
-                      outline: 'none'
-                    }}
-                    value={newPrestamo.usuarioId}
-                    onChange={(e) => setNewPrestamo({...newPrestamo, usuarioId: e.target.value})}
-                  >
-                    <option value="">Buscar cliente...</option>
-                    {usuarios.map(u => <option key={u.id} value={u.id}>{u.nombre} {u.apellido}</option>)}
-                  </select>
-                </div>
+                {!isClient && (
+                  <div>
+                    <label style={{ display: 'block', marginBottom: 'var(--space-2)', fontSize: 'var(--text-label)', color: 'var(--color-text-secondary)', fontWeight: 600 }}>Titular del Crédito</label>
+                    <select 
+                      required
+                      style={{ 
+                        width: '100%', 
+                        backgroundColor: 'var(--color-primary-800)', 
+                        border: 'var(--border-subtle)', 
+                        borderRadius: 'var(--radius-md)', 
+                        padding: 'var(--space-3) var(--space-4)',
+                        color: 'white',
+                        outline: 'none'
+                      }}
+                      value={newPrestamo.usuarioId}
+                      onChange={(e) => setNewPrestamo({...newPrestamo, usuarioId: e.target.value})}
+                    >
+                      <option value="">Buscar cliente...</option>
+                      {usuarios.map(u => <option key={u.id} value={u.id}>{u.nombre} {u.apellido}</option>)}
+                    </select>
+                  </div>
+                )}
 
                 <Input 
                   label="Capital de Inversión"

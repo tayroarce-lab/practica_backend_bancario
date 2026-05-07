@@ -7,8 +7,9 @@ import type {
   Prestamo, 
   CreateUsuarioDTO, 
   CreateCuentaDTO, 
-  CreateTransferenciaDTO, 
-  CreatePrestamoDTO 
+  CreatePrestamoDTO,
+  DashboardStats,
+  DashboardChart
 } from '../types';
 
 /**
@@ -142,10 +143,13 @@ export const cuentaService = {
 };
 
 export const transaccionService = {
-  getTransacciones: () => api.get<Transaccion[]>('/transacciones'),
+  getTransacciones: (filtros?: { tipo?: string, cuentaId?: number }) => 
+    api.get<Transaccion[]>('/transacciones', { params: filtros }),
   getTransaccionesPorCuenta: (cuentaId: number) => api.get<Transaccion[]>(`/transacciones/cuenta/${cuentaId}`),
-  realizarTransferencia: (data: CreateTransferenciaDTO) => 
-    api.post('/transacciones/transferencia', sanitize(data)),
+  validarCuentaDestino: (numeroCuenta: string) =>
+    api.post<{ valido: boolean, titular: string }>('/transacciones/validar-cuenta', { numeroCuenta }),
+  realizarTransferencia: (data: { cuentaOrigenId: number, numeroCuentaDestino: string, monto: number, descripcion?: string }) => 
+    api.post<Transaccion>('/transacciones/transferencia', sanitize(data)),
 };
 
 export const prestamoService = {
@@ -155,6 +159,11 @@ export const prestamoService = {
   aprobarPrestamo: (id: number, cuentaDesembolsoId: number) => 
     api.put(`/prestamos/${id}/aprobar`, { cuentaDesembolsoId }),
   rechazarPrestamo: (id: number) => api.put(`/prestamos/${id}/rechazar`),
+};
+
+export const dashboardService = {
+  getStats: () => api.get<DashboardStats>('/dashboard/stats'),
+  getChart: () => api.get<DashboardChart>('/dashboard/chart'),
 };
 
 export default api;

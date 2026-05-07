@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Clock, LogOut, RefreshCw } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
@@ -9,7 +9,10 @@ import Card from '../ui/Card';
 const SessionMonitor: React.FC = () => {
   const { user, logout } = useAuth();
   const [showModal, setShowModal] = useState(false);
-  const [timeLeft, setTimeLeft] = useState(120); // 2 minutes countdown
+  const [timeLeft, setTimeLeft] = useState(120);
+  // useRef para estabilizar 'logout' y evitar que sea una dependencia cambiante
+  const logoutRef = useRef(logout);
+  useEffect(() => { logoutRef.current = logout; }, [logout]);
   
   const handleExtend = async () => {
     try {
@@ -38,14 +41,14 @@ const SessionMonitor: React.FC = () => {
 
   // Efecto 2: Gestionar el intervalo de cuenta regresiva cuando se muestra el modal
   useEffect(() => {
-    let countdownInterval: any;
+    let countdownInterval: ReturnType<typeof setInterval>;
 
     if (showModal) {
       countdownInterval = setInterval(() => {
         setTimeLeft((prev) => {
           if (prev <= 1) {
             clearInterval(countdownInterval);
-            logout();
+            logoutRef.current(); // usar ref estable, sin añadir 'logout' a deps
             return 0;
           }
           return prev - 1;
@@ -56,7 +59,7 @@ const SessionMonitor: React.FC = () => {
     }
 
     return () => clearInterval(countdownInterval);
-  }, [showModal, logout]);
+  }, [showModal]); // ✓ Solo depende de showModal, no de logout
 
   if (!showModal) return null;
 

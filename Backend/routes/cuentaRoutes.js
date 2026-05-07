@@ -8,7 +8,7 @@ const authorize = require('../middlewares/authorize');
 // authMiddleware ya se aplica en app.js
 
 router.get('/', 
-  authorize('admin', 'empleado'), 
+  authorize('admin', 'empleado', 'cliente'), 
   cuentaController.obtenerCuentas
 );
 

@@ -18,6 +18,7 @@ const UsuariosPage: React.FC = () => {
   const [editingUser, setEditingUser] = useState<Usuario | null>(null);
   const { user: authUser } = useAuth();
   const isAdmin = authUser?.rol === 'admin';
+  const [searchTerm, setSearchTerm] = useState('');
 
   const fetchUsuarios = async () => {
     try {
@@ -47,8 +48,9 @@ const UsuariosPage: React.FC = () => {
     setShowModal(true);
   };
 
-  const handleOpenEdit = () => {
-    toast.info('La edición de usuarios se implementará en la siguiente fase.');
+  const handleOpenEdit = (u: Usuario) => {
+    setEditingUser(u);
+    setShowModal(true);
   };
 
   const handleChangeRol = async (id: number, nuevoRol: string) => {
@@ -96,6 +98,8 @@ const UsuariosPage: React.FC = () => {
             <input 
               type="text" 
               placeholder="Buscar por nombre o email..." 
+              value={searchTerm}
+              onChange={e => setSearchTerm(e.target.value)}
               style={{ 
                 width: '100%', 
                 padding: 'var(--space-3) var(--space-4) var(--space-3) var(--space-10)',
@@ -121,6 +125,7 @@ const UsuariosPage: React.FC = () => {
                 <th style={{ padding: 'var(--space-4)', color: 'var(--color-text-muted)', fontWeight: 600, fontSize: 'var(--text-label)', textTransform: 'uppercase', textAlign: 'left' }}>Titular</th>
                 <th style={{ padding: 'var(--space-4)', color: 'var(--color-text-muted)', fontWeight: 600, fontSize: 'var(--text-label)', textTransform: 'uppercase', textAlign: 'left' }}>Contacto</th>
                 <th style={{ padding: 'var(--space-4)', color: 'var(--color-text-muted)', fontWeight: 600, fontSize: 'var(--text-label)', textTransform: 'uppercase', textAlign: 'left' }}>Rol</th>
+                <th style={{ padding: 'var(--space-4)', color: 'var(--color-text-muted)', fontWeight: 600, fontSize: 'var(--text-label)', textTransform: 'uppercase', textAlign: 'left' }}>Registro</th>
                 <th style={{ padding: 'var(--space-4)', color: 'var(--color-text-muted)', fontWeight: 600, fontSize: 'var(--text-label)', textTransform: 'uppercase', textAlign: 'right' }}>Acciones</th>
               </tr>
             </thead>
@@ -131,26 +136,29 @@ const UsuariosPage: React.FC = () => {
                     <td colSpan={4} style={{ padding: '8px' }}><Skeleton height="60px" /></td>
                   </tr>
                 ))
-              ) : usuarios.map((user) => (
+              ) : usuarios
+                  .filter(u =>
+                    u.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                    u.apellido.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                    u.email.toLowerCase().includes(searchTerm.toLowerCase())
+                  )
+                  .map((user) => (
                 <tr key={user.id} style={{ backgroundColor: 'rgba(255,255,255,0.02)' }} className="row-hover">
                   <td style={{ padding: 'var(--space-4)', borderRadius: 'var(--radius-md) 0 0 var(--radius-md)' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-4)' }}>
                       <div style={{ 
-                        width: '40px', 
-                        height: '40px', 
-                        borderRadius: '50%', 
-                        backgroundColor: 'var(--color-bg-subtle)', 
-                        display: 'flex', 
-                        alignItems: 'center', 
-                        justifyContent: 'center', 
-                        color: 'var(--color-accent-500)',
-                        border: 'var(--border-subtle)'
+                        width: '40px', height: '40px', borderRadius: '50%', 
+                        backgroundColor: 'rgba(201,168,76,0.1)', 
+                        border: '1px solid rgba(201,168,76,0.3)',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center', 
+                        color: 'var(--color-accent-500)', fontWeight: 700, fontSize: '14px',
+                        flexShrink: 0
                       }}>
-                        <UserIcon size={20} />
+                        {user.nombre?.[0]}{user.apellido?.[0]}
                       </div>
                       <div>
                         <p className="font-display" style={{ fontWeight: 600, color: 'white', margin: 0 }}>{user.nombre} {user.apellido}</p>
-                        <p style={{ fontSize: '10px', color: 'var(--color-text-muted)', textTransform: 'uppercase', letterSpacing: '1px' }}>ID: {user.id.toString().padStart(4, '0')}</p>
+                        <p style={{ fontSize: '10px', color: 'var(--color-text-muted)', textTransform: 'uppercase', letterSpacing: '1px', margin: 0 }}>ID: {user.id.toString().padStart(4, '0')}</p>
                       </div>
                     </div>
                   </td>
@@ -176,9 +184,7 @@ const UsuariosPage: React.FC = () => {
                           borderRadius: 'var(--radius-md)',
                           padding: 'var(--space-2) var(--space-3)',
                           fontSize: 'var(--text-body-sm)',
-                          fontWeight: 600,
-                          cursor: 'pointer',
-                          outline: 'none'
+                          fontWeight: 600, cursor: 'pointer', outline: 'none'
                         }}
                       >
                         <option value="admin">Admin</option>
@@ -186,24 +192,23 @@ const UsuariosPage: React.FC = () => {
                         <option value="cliente">Cliente</option>
                       </select>
                     ) : (
-                      <Badge status={user.rol === 'admin' ? 'aprobado' : user.rol === 'empleado' ? 'pendiente' : 'activa'}>
-                        {user.rol}
-                      </Badge>
+                      <Badge status={user.rol || 'cliente'} />
                     )}
                   </td>
                   <td style={{ padding: 'var(--space-4)', borderRadius: '0 var(--radius-md) var(--radius-md) 0', textAlign: 'right' }}>
                     <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 'var(--space-2)' }}>
-                      <Button variant="ghost" size="sm" onClick={handleOpenEdit} style={{ padding: 'var(--space-2)' }}>
+                      <Button variant="ghost" size="sm" onClick={() => handleOpenEdit(user)} style={{ padding: 'var(--space-2)' }}>
                         <Edit2 size={16} />
                       </Button>
-                      <Button 
-                        variant="ghost" 
-                        size="sm" 
-                        onClick={() => handleDelete(user.id)}
-                        style={{ padding: 'var(--space-2)', color: 'var(--color-error-500)' }}
-                      >
-                        <Trash2 size={16} />
-                      </Button>
+                      {isAdmin && (
+                        <Button 
+                          variant="ghost" size="sm" 
+                          onClick={() => handleDelete(user.id)}
+                          style={{ padding: 'var(--space-2)', color: 'var(--color-error-500)' }}
+                        >
+                          <Trash2 size={16} />
+                        </Button>
+                      )}
                     </div>
                   </td>
                 </tr>
@@ -215,15 +220,17 @@ const UsuariosPage: React.FC = () => {
 
       <Modal
         isOpen={showModal}
-        onClose={() => setShowModal(false)}
-        title={editingUser ? "Editar Usuario" : "Registrar Nuevo Usuario"}
+        onClose={() => { setShowModal(false); setEditingUser(null); }}
+        title={editingUser ? `Editar Usuario — ${editingUser.nombre} ${editingUser.apellido}` : 'Registrar Nuevo Usuario'}
       >
         <UserForm 
+          editingUser={editingUser}
           onSuccess={() => {
             setShowModal(false);
+            setEditingUser(null);
             fetchUsuarios();
           }}
-          onCancel={() => setShowModal(false)}
+          onCancel={() => { setShowModal(false); setEditingUser(null); }}
         />
       </Modal>
 

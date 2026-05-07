@@ -137,11 +137,20 @@ const rechazarPrestamo = async (req, res) => {
 // Obtener todos los préstamos
 const obtenerPrestamos = async (req, res) => {
   try {
+    let whereClause = {};
+    
+    // RESTRICCIÓN: Cliente solo ve sus propios préstamos en el listado general
+    if (req.usuario.rol === 'cliente') {
+      whereClause.usuarioId = req.usuario.id;
+    }
+
     const prestamos = await Prestamo.findAll({
+      where: whereClause,
       include: [
         { model: Usuario, as: 'usuario', attributes: ['id', 'nombre', 'apellido', 'email'] },
         { model: Cuenta, as: 'cuentaDesembolso', attributes: ['numeroCuenta'] }
-      ]
+      ],
+      order: [['createdAt', 'DESC']]
     });
     res.json(prestamos);
   } catch (error) {

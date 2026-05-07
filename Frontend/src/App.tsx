@@ -8,6 +8,7 @@ import Cuentas from './pages/Cuentas';
 import Prestamos from './pages/Prestamos';
 import Transacciones from './pages/Transacciones';
 import LoginPage from './pages/LoginPage';
+import Perfil from './pages/Perfil';
 import SessionMonitor from './components/auth/SessionMonitor';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { useSocket } from './hooks/useSocket';
@@ -65,9 +66,9 @@ const AppContent: React.FC = () => {
           } />
           
           <Route path="/cuentas" element={
-            <RoleRoute roles={['admin', 'empleado']}>
+            <ProtectedRoute>
               <Cuentas />
-            </RoleRoute>
+            </ProtectedRoute>
           } />
           
           <Route path="/prestamos" element={
@@ -79,6 +80,12 @@ const AppContent: React.FC = () => {
           <Route path="/transacciones" element={
             <ProtectedRoute>
               <Transacciones />
+            </ProtectedRoute>
+          } />
+
+          <Route path="/perfil" element={
+            <ProtectedRoute>
+              <Perfil />
             </ProtectedRoute>
           } />
 

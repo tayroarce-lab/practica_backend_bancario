@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { CreditCard, Plus, ArrowUpRight, ArrowDownLeft, Lock, Unlock } from 'lucide-react';
 import { toast } from 'sonner';
 import { cuentaService, usuarioService } from '../services/api';
+import { useAuth } from '../context/AuthContext';
 import type { Cuenta, Usuario } from '../types';
 import Button from '../components/ui/Button';
 import Card from '../components/ui/Card';
@@ -11,6 +13,7 @@ import Badge from '../components/ui/Badge';
 import Skeleton from '../components/ui/Skeleton';
 
 const CuentasPage: React.FC = () => {
+  const navigate = useNavigate();
   const [cuentas, setCuentas] = useState<Cuenta[]>([]);
   const [usuarios, setUsuarios] = useState<Usuario[]>([]);
   const [loading, setLoading] = useState(true);
@@ -19,15 +22,19 @@ const CuentasPage: React.FC = () => {
   const [selectedCuenta, setSelectedCuenta] = useState<Cuenta | null>(null);
   const [monto, setMonto] = useState('');
   const [newCuenta, setNewCuenta] = useState({ usuarioId: '', tipoCuentaId: '1', saldoInicial: '0' });
+  const { user } = useAuth();
+  const isClient = user?.rol === 'cliente';
 
   const fetchData = async () => {
     try {
-      const [resCuentas, resUsuarios] = await Promise.all([
-        cuentaService.getCuentas(),
-        usuarioService.getUsuarios()
-      ]);
-      setCuentas(resCuentas.data);
-      setUsuarios(resUsuarios.data);
+      const cuentasRes = await cuentaService.getCuentas();
+      setCuentas(cuentasRes.data);
+
+      // Solo admin/empleado necesitan lista de usuarios (para crear cuenta)
+      if (!isClient) {
+        const usuariosRes = await usuarioService.getUsuarios();
+        setUsuarios(usuariosRes.data);
+      }
     } catch (error) {
       console.error('Error fetching data:', error);
     } finally {
@@ -88,12 +95,14 @@ const CuentasPage: React.FC = () => {
     <div className="fade-in">
       <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-10)' }}>
         <div>
-          <h1 className="h1" style={{ marginBottom: 'var(--space-2)' }}>Gestión de Cuentas</h1>
-          <p className="text-secondary">Control de saldos, estados y productos financieros.</p>
+          <h1 className="h1" style={{ marginBottom: 'var(--space-2)' }}>{isClient ? 'Mis Cuentas' : 'Gestión de Cuentas'}</h1>
+          <p className="text-secondary">{isClient ? 'Resumen de sus productos financieros.' : 'Control de saldos, estados y productos financieros.'}</p>
         </div>
-        <Button onClick={() => setShowModal(true)}>
-          <Plus size={18} style={{ marginRight: 'var(--space-2)' }} /> Nueva Cuenta
-        </Button>
+        {!isClient && (
+          <Button onClick={() => setShowModal(true)}>
+            <Plus size={18} style={{ marginRight: 'var(--space-2)' }} /> Nueva Cuenta
+          </Button>
+        )}
       </header>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: 'var(--space-6)' }}>
@@ -116,6 +125,23 @@ const CuentasPage: React.FC = () => {
               </div>
             </Card>
           ))
+        ) : cuentas.length === 0 ? (
+          <div style={{ 
+            gridColumn: '1 / -1', 
+            padding: 'var(--space-12)', 
+            textAlign: 'center', 
+            backgroundColor: 'var(--color-bg-subtle)', 
+            borderRadius: 'var(--radius-lg)',
+            border: 'var(--border-subtle)'
+          }}>
+            <CreditCard size={48} style={{ color: 'var(--color-text-muted)', marginBottom: 'var(--space-4)' }} />
+            <h3 className="h3" style={{ marginBottom: 'var(--space-2)' }}>No hay cuentas disponibles</h3>
+            <p className="text-secondary" style={{ maxWidth: '400px', margin: '0 auto' }}>
+              {isClient 
+                ? 'Actualmente no tiene productos financieros activos en su portafolio. Contacte a un asesor para aperturar una nueva cuenta.' 
+                : 'No se encontraron cuentas registradas en el sistema. Utilice el botón "Nueva Cuenta" para registrar la primera.'}
+            </p>
+          </div>
         ) : cuentas.map((cuenta) => (
           <Card
             key={cuenta.id}
@@ -152,34 +178,48 @@ const CuentasPage: React.FC = () => {
               </div>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 'var(--space-2)' }}>
-              <Button 
-                variant="ghost"
-                size="sm"
-                disabled={cuenta.estado === 'bloqueada'}
-                onClick={() => { setSelectedCuenta(cuenta); setShowActionModal('deposito'); }}
-                style={{ flexDirection: 'column', height: 'auto', padding: 'var(--space-3) 0' }}
-              >
-                <ArrowDownLeft size={16} /> <span style={{ marginTop: '4px' }}>Depósito</span>
-              </Button>
-              <Button 
-                variant="ghost"
-                size="sm"
-                disabled={cuenta.estado === 'bloqueada'}
-                onClick={() => { setSelectedCuenta(cuenta); setShowActionModal('retiro'); }}
-                style={{ flexDirection: 'column', height: 'auto', padding: 'var(--space-3) 0' }}
-              >
-                <ArrowUpRight size={16} /> <span style={{ marginTop: '4px' }}>Retiro</span>
-              </Button>
-              <Button 
-                variant="ghost"
-                size="sm"
-                onClick={() => toggleEstado(cuenta)}
-                style={{ flexDirection: 'column', height: 'auto', padding: 'var(--space-3) 0' }}
-              >
-                {cuenta.estado === 'activa' ? <Lock size={16} /> : <Unlock size={16} />} 
-                <span style={{ marginTop: '4px' }}>{cuenta.estado === 'activa' ? 'Bloquear' : 'Activar'}</span>
-              </Button>
+            <div style={{ display: 'grid', gridTemplateColumns: isClient ? '1fr' : 'repeat(3, 1fr)', gap: 'var(--space-2)' }}>
+              {isClient ? (
+                <Button 
+                  variant="ghost"
+                  size="sm"
+                  disabled={cuenta.estado === 'bloqueada'}
+                  onClick={() => navigate('/transacciones', { state: { openTransferModal: true } })}
+                  style={{ flexDirection: 'column', height: 'auto', padding: 'var(--space-3) 0' }}
+                >
+                  <ArrowUpRight size={16} /> <span style={{ marginTop: '4px' }}>Transferir a Terceros</span>
+                </Button>
+              ) : (
+                <>
+                  <Button 
+                    variant="ghost"
+                    size="sm"
+                    disabled={cuenta.estado === 'bloqueada'}
+                    onClick={() => { setSelectedCuenta(cuenta); setShowActionModal('deposito'); }}
+                    style={{ flexDirection: 'column', height: 'auto', padding: 'var(--space-3) 0' }}
+                  >
+                    <ArrowDownLeft size={16} /> <span style={{ marginTop: '4px' }}>Depósito</span>
+                  </Button>
+                  <Button 
+                    variant="ghost"
+                    size="sm"
+                    disabled={cuenta.estado === 'bloqueada'}
+                    onClick={() => { setSelectedCuenta(cuenta); setShowActionModal('retiro'); }}
+                    style={{ flexDirection: 'column', height: 'auto', padding: 'var(--space-3) 0' }}
+                  >
+                    <ArrowUpRight size={16} /> <span style={{ marginTop: '4px' }}>Retiro</span>
+                  </Button>
+                  <Button 
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => toggleEstado(cuenta)}
+                    style={{ flexDirection: 'column', height: 'auto', padding: 'var(--space-3) 0' }}
+                  >
+                    {cuenta.estado === 'activa' ? <Lock size={16} /> : <Unlock size={16} />} 
+                    <span style={{ marginTop: '4px' }}>{cuenta.estado === 'activa' ? 'Bloquear' : 'Activar'}</span>
+                  </Button>
+                </>
+              )}
             </div>
           </Card>
         ))}
